@@ -2,16 +2,16 @@
     "host": "0.0.0.0",
     "port": 3000,
     "logpath": "logger.php",
-    "defaultPlayerMass": 10,
+    "defaultPlayerSize": 10,
     "fishs": {
         "fill": "#33ff33",
         "stroke": "#19D119",
         "strokeWidth": 20,
-        "defaultMass": {
+        "defaultSize": {
             "from": 100,
             "to": 150
         },
-        "splitMass": 180
+        "splitSize": 180
     },
     "gameWidth": 1000,
     "gameHeight": 1000,

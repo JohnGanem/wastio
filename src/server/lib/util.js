@@ -9,9 +9,9 @@ exports.validNick = function (nickname) {
     return regex.exec(nickname) !== null;
 };
 
-// determine mass from radius of circle
-exports.massToRadius = function (mass) {
-    return 4 + Math.sqrt(mass) * 6;
+// determine size from radius of circle
+exports.sizeToRadius = function (size) {
+    return size / 2;
 };
 
 
@@ -40,12 +40,43 @@ exports.randomPosition = function (radius) {
     };
 };
 
-// generate a random position within the field of play
+// generate the center position
 exports.centerPosition = function () {
     return {
         x: cfg.gameWidth / 2,
         y: cfg.gameHeight / 2
     };
+};
+
+// generate a random position at the border
+exports.randomBorder = function (cas) {
+    var coordinates;
+    switch (cas) {
+        case 1:
+            coordinates = {
+                x: cfg.gameWidth,
+                y: exports.randomInRange(0, cfg.gameHeight)
+            };
+            break;
+        case 2:
+            coordinates = {
+                x: 0,
+                y: exports.randomInRange(0, cfg.gameHeight)
+            };
+            break;
+        case 3:
+            coordinates = {
+                x: exports.randomInRange(0, cfg.gameWidth),
+                y: cfg.gameHeight
+            };
+            break;
+        default:
+            coordinates = {
+                x: exports.randomInRange(0, cfg.gameWidth),
+                y: 0
+            };
+    }
+    return coordinates;
 };
 
 exports.uniformPosition = function (points, radius) {
