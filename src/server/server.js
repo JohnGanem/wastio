@@ -1,4 +1,4 @@
-/*jslint bitwise: true, node: true */
+/* jslint bitwise: true, node: true */
 'use strict';
 
 var express = require('express');
@@ -17,7 +17,7 @@ var util = require('./lib/util');
 // Import quadtree.
 var quadtree = require('simple-quadtree');
 
-//call sqlinfo
+// Call sqlinfo.
 var s = c.sqlinfo;
 
 var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);

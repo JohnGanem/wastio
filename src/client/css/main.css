@@ -118,14 +118,20 @@ div {
 #startMenu {
     position: relative;
     margin: auto;
-    margin-top: 100px;
-    width: 350px;
+    min-width: 250px;
+    max-width: 350px;
     padding: 20px;
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
     background-color: white;
     box-sizing: border-box;
+}
+
+@media(min-height: 600px) {
+    #startMenu {
+        margin-top: 35px;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+    }
 }
 
 #startMenu p {
@@ -259,24 +265,24 @@ div {
 }
 
 @media only screen  and (min-width : 1224px) {
-#mobile {
-display: none;
-	}
+    #mobile {
+        display: none;
+    }
 }
 
 @media only screen  and (max-width : 1224px) {
-#chatbox {
-display: none;
-        }
+    #chatbox {
+        display: none;
+    }
 }
 
 input [type="image"]:focus{
- border:none;
- outline: 1px solid transparent;
- border-style: none;
+    border:none;
+    outline: 1px solid transparent;
+    border-style: none;
 }
 
 *:focus {
- outline: 1px solid transparent;
- border-style: none;
+    outline: 1px solid transparent;
+    border-style: none;
 }

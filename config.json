@@ -6,16 +6,16 @@
     "fireFood": 20,
     "limitSplit": 16,
     "defaultPlayerMass": 10,
-	"virus": {
-    "fill": "#33ff33",
-  	"stroke": "#19D119",
-		"strokeWidth": 20,
-		"defaultMass": {
+    "virus": {
+        "fill": "#33ff33",
+        "stroke": "#19D119",
+        "strokeWidth": 20,
+        "defaultMass": {
             "from": 100,
             "to": 150
         },
-		"splitMass": 180
-	},
+        "splitMass": 180
+    },
     "gameWidth": 5000,
     "gameHeight": 5000,
     "adminPass": "DEFAULT",
@@ -32,12 +32,12 @@
     "massLossRate": 1,
     "minMassLoss": 50,
     "mergeTimer": 15,
-    "sqlinfo":{
-      "connectionLimit": 100,
-      "host": "DEFAULT",
-      "user": "root",
-      "password": "DEFAULT",
-      "database": "DEFAULT",
-      "debug": false
+    "sqlinfo": {
+        "connectionLimit": 100,
+        "host": "DEFAULT",
+        "user": "root",
+        "password": "DEFAULT",
+        "database": "DEFAULT",
+        "debug": false
     }
 }
