@@ -26,7 +26,7 @@ var users = [];
 var fishs = [];
 var sockets = {};
 
-var leaderboard = [];
+var leaderboard;
 var leaderboardChanged = false;
 
 var V = SAT.Vector;
@@ -217,7 +217,7 @@ io.on('connection', function (socket) {
             currentPlayer = player;
             currentPlayer.lastHeartbeat = new Date().getTime();
             users.push(currentPlayer);
-            io.emit('playerJoin', {name: currentPlayer.name});
+//            io.emit('playerJoin', {name: currentPlayer.name});
             socket.emit('gameSetup', {
                 gameWidth: c.gameWidth,
                 gameHeight: c.gameHeight
@@ -243,7 +243,7 @@ io.on('connection', function (socket) {
         if (util.findIndex(users, currentPlayer.id) > -1)
             users.splice(util.findIndex(users, currentPlayer.id), 1);
         console.log('[INFO] User ' + currentPlayer.name + ' disconnected!');
-        socket.broadcast.emit('playerDisconnect', {name: currentPlayer.name});
+//        socket.broadcast.emit('playerDisconnect', {name: currentPlayer.name});
     });
     // Heartbeat function, update everytime.
     socket.on('0', function (target) {
@@ -314,7 +314,7 @@ function tickPlayer(currentPlayer) {
             }, []);
     if (fishCollision > 0) {
         users.splice(currentPlayer.id, 1);
-        io.emit('playerDied', {name: currentPlayer.name});
+//        io.emit('playerDied', {name: currentPlayer.name});
         sockets[currentPlayer.id].emit('RIP');
         fishs.splice(fishCollision, 1);
     }

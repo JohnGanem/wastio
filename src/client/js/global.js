@@ -2,9 +2,6 @@ module.exports = {
     // Keys and other mathematical constants
     KEY_ESC: 27,
     KEY_ENTER: 13,
-    KEY_CHAT: 13,
-    KEY_FIREFOOD: 119,
-    KEY_SPLIT: 32,
     KEY_LEFT: 37,
     KEY_UP: 38,
     KEY_RIGHT: 39,
@@ -13,8 +10,7 @@ module.exports = {
     spin: -Math.PI,
     enemySpin: -Math.PI,
     mobile: false,
-    foodSides: 10,
-    virusSides: 20,
+    fishSides: 20,
 
     // Canvas
     screenWidth: window.innerWidth,
