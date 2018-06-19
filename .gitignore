@@ -4,3 +4,4 @@ npm-debug.log
 client/bower_components
 bin
 /nbproject/private/
+/nbproject/
