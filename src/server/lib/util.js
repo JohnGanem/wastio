@@ -4,7 +4,7 @@
 
 var cfg = require('../../../config.json');
 
-exports.validNick = function(nickname) {
+exports.validNick = function (nickname) {
     var regex = /^\w*$/;
     return regex.exec(nickname) !== null;
 };
@@ -40,7 +40,15 @@ exports.randomPosition = function (radius) {
     };
 };
 
-exports.uniformPosition = function(points, radius) {
+// generate a random position within the field of play
+exports.centerPosition = function () {
+    return {
+        x: cfg.gameWidth / 2,
+        y: cfg.gameHeight / 2
+    };
+};
+
+exports.uniformPosition = function (points, radius) {
     var bestCandidate, maxDistance = 0;
     var numberOfCandidates = 10;
 
@@ -72,7 +80,7 @@ exports.uniformPosition = function(points, radius) {
     return bestCandidate;
 };
 
-exports.findIndex = function(arr, id) {
+exports.findIndex = function (arr, id) {
     var len = arr.length;
 
     while (len--) {
@@ -84,7 +92,7 @@ exports.findIndex = function(arr, id) {
     return -1;
 };
 
-exports.randomColor = function() {
+exports.randomColor = function () {
     var color = '#' + ('00000' + (Math.random() * (1 << 24) | 0).toString(16)).slice(-6);
     var c = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
     var r = (parseInt(c[1], 16) - 32) > 0 ? (parseInt(c[1], 16) - 32) : 0;
