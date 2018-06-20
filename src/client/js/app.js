@@ -235,7 +235,7 @@ function setupSocket(socket) {
     socket.on('leaderboard', function (data) {
         leaderboard = data.leaderboard;
         var status = '<span class="title">Informations générales</span>';
-        status += '<br />';
+        status += '<br/>';
         status += '<span class="me">' + leaderboard + "</span>";
         //status += '<br />Players: ' + data.players;
         document.getElementById('status').innerHTML = status;
@@ -535,7 +535,7 @@ function gameLoop() {
             drawgrid();
             fishs.forEach(drawFish);
 
-            if (global.borderDraw) {
+            if (global.borderDraw && global.playerType == 'player') {
                 drawborder();
             }
             drawPlayers();

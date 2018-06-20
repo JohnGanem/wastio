@@ -375,15 +375,28 @@ function gameloop() {
             if (gameStart) {
                 gameStart = false;
                 leaderboard = "Nous avons un gagnant !";
+                var id;
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].type == 'player') {
+                        id = users[i].id;
+                        break;
+                    }
+                }
+                setTimeout(function () {
+                    sockets[id].emit('kick', 'Vous avez gagné !');
+                    sockets[id].disconnect();
+                }, 2500);
             } else {
                 leaderboard = "Il y a 1 joueur connecté !";
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 2 && gameStart == false) {
-            leaderboard = "Il y a 2 joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
             timeoutStart = setTimeout(function () {
                 gameStart = true;
-            }, 30000);
+                leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
+                leaderboardChanged = true;
+            }, 60000);
+            leaderboard = "Il y a 2 joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
             if (nbPlayers == 100 && gameStart == false) {
                 clearTimeout(timeoutStart);
@@ -404,6 +417,7 @@ function gameloop() {
             if (nbPlayers >= 2) {
                 leaderboardChanged = true;
                 leaderboard = "Il y a " + nbPlayers + " joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+                console.log("[INFO] Game start in " + printTimeLeft(timeoutStart));
             }
         }
     }
@@ -418,14 +432,13 @@ function gameloop() {
 
 function printTimeLeft(timeout) {
     var timeLeft = getTimeLeft(timeout);
-    console.log(timeLeft);
     var minutsLeft = Math.trunc(timeLeft / 60);
     var secondsLeft = timeLeft % 60;
     return minutsLeft + ":" + secondsLeft;
 }
 
 function getTimeLeft(timeout) {
-    return Math.ceil((timeout._idleStart + timeout._idleTimeout - Date.now()) / 1000);
+    return Math.ceil(((timeout._idleStart + timeout._idleTimeout) / 1000) - process.uptime());
 }
 
 function sendUpdates() {
