@@ -13,22 +13,22 @@ var expect = require('chai').expect,
 
 describe('util.js', function () {
 
-  describe('#massToRadius', function () {
+  describe('#sizeToRadius', function () {
 
     it('should return non-zero radius on zero input', function () {
-      var r = util.massToRadius(0);
+      var r = util.sizeToRadius(0);
       expect(r).to.be.a('number');
-      expect(r).to.equal(4);
+      expect(r).to.equal(0);
     });
 
-    it('should convert masses to a circle radius', function () {
-      var r1 = util.massToRadius(4),
-          r2 = util.massToRadius(16),
-          r3 = util.massToRadius(1);
+    it('should convert size to a circle radius', function () {
+      var r1 = util.sizeToRadius(4),
+          r2 = util.sizeToRadius(16),
+          r3 = util.sizeToRadius(1);
 
-      expect(r1).to.equal(16);
-      expect(r2).to.equal(28);
-      expect(r3).to.equal(10);
+      expect(r1).to.equal(2);
+      expect(r2).to.equal(8);
+      expect(r3).to.equal(1);
     });
   });
 

@@ -2,19 +2,19 @@
     "host": "0.0.0.0",
     "port": 3000,
     "logpath": "logger.php",
-    "defaultPlayerSize": 10,
+    "defaultPlayerSize": 20,
     "fishs": {
         "fill": "#33ff33",
         "stroke": "#19D119",
         "strokeWidth": 20,
         "defaultSize": {
-            "from": 100,
+            "from": 20,
             "to": 150
         },
         "splitSize": 180
     },
-    "gameWidth": 1000,
-    "gameHeight": 1000,
+    "gameWidth": 2000,
+    "gameHeight": 2000,
     "adminPass": "DEFAULT",
     "maxFishs": 50,
     "slowBase": 4.5,

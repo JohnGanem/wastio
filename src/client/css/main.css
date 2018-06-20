@@ -264,6 +264,10 @@ div {
     opacity: 0;
 }
 
+#cvs {
+    margin: auto;
+}
+
 @media only screen  and (min-width : 1224px) {
     #mobile {
         display: none;

@@ -11,7 +11,7 @@ exports.validNick = function (nickname) {
 
 // determine size from radius of circle
 exports.sizeToRadius = function (size) {
-    return size / 2;
+    return Math.round(size / 2);
 };
 
 
@@ -49,32 +49,70 @@ exports.centerPosition = function () {
 };
 
 // generate a random position at the border
-exports.randomBorder = function (cas) {
+
+exports.randomBorder = function (start, radius) {
     var coordinates;
-    switch (cas) {
+    switch (start) {
         case 1:
             coordinates = {
-                x: cfg.gameWidth,
-                y: exports.randomInRange(0, cfg.gameHeight)
+                x: cfg.gameWidth - radius,
+                y: exports.randomInRange(radius, cfg.gameHeight - radius)
             };
             break;
         case 2:
             coordinates = {
-                x: 0,
-                y: exports.randomInRange(0, cfg.gameHeight)
+                x: exports.randomInRange(radius, cfg.gameWidth - radius),
+                y: cfg.gameHeight - radius
             };
             break;
         case 3:
             coordinates = {
-                x: exports.randomInRange(0, cfg.gameWidth),
-                y: cfg.gameHeight
+                x: radius,
+                y: exports.randomInRange(radius, cfg.gameHeight - radius)
             };
             break;
         default:
             coordinates = {
-                x: exports.randomInRange(0, cfg.gameWidth),
-                y: 0
+                x: exports.randomInRange(radius, cfg.gameWidth - radius),
+                y: radius
             };
+    }
+    return coordinates;
+};
+
+// generate a random target at the border
+exports.randomTargetBorder = function (start, position, radius) {
+    var coordinates;
+    switch (start) {
+        case 1:
+            coordinates = {
+                x: radius,
+                y: exports.randomInRange(radius, cfg.gameHeight - radius)
+            };
+            break;
+        case 2:
+            coordinates = {
+                x: exports.randomInRange(radius, cfg.gameWidth - radius),
+                y: radius
+            };
+            break;
+        case 3:
+            coordinates = {
+                x: cfg.gameWidth - radius,
+                y: exports.randomInRange(radius, cfg.gameHeight - radius)
+            };
+            break;
+        default:
+            coordinates = {
+                x: exports.randomInRange(radius, cfg.gameWidth - radius),
+                y: cfg.gameHeight - radius
+            };
+    }
+    if (position.x > coordinates.x) {
+        coordinates.x = -coordinates.x;
+    }
+    if (position.y > coordinates.y) {
+        coordinates.y = -coordinates.y;
     }
     return coordinates;
 };

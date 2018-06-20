@@ -24,6 +24,7 @@ var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);
 
 var users = [];
 var fishs = [];
+var nbFishs = 0;
 var sockets = {};
 
 var leaderboard;
@@ -56,14 +57,13 @@ function addFishs(toAdd) {
     while (toAdd--) {
         var size = util.randomInRange(c.fishs.defaultSize.from, c.fishs.defaultSize.to, true);
         var radius = util.sizeToRadius(size);
-        var startLocation = randomInRange(1, 4);
-        var position = util.randomBorder(startLocation);
+        var startLocation = util.randomInRange(0, 4);
+        var position = util.randomBorder(startLocation, radius);
+        var target = util.randomTargetBorder(startLocation, position, radius);
+        var speed = util.randomInRange(1, 40) / 10;
         fishs.push({
             id: ((new Date()).getTime() + '' + fishs.length) >>> 0,
-            target: {
-                x: 0,
-                y: 0
-            },
+            target: target,
             startLocation: startLocation,
             x: position.x,
             y: position.y,
@@ -72,8 +72,9 @@ function addFishs(toAdd) {
             fill: c.fishs.fill,
             stroke: c.fishs.stroke,
             strokeWidth: c.fishs.strokeWidth,
-            speed: 10
+            speed: speed
         });
+        nbFishs++;
     }
 }
 
@@ -106,7 +107,7 @@ function movePlayer(player) {
     if (!isNaN(deltaX)) {
         player.x += deltaX;
     }
-    var borderCalc = radius / 3;
+    var borderCalc = radius / 3 + 150;
     if (player.x > c.gameWidth - borderCalc) {
         player.x = c.gameWidth - borderCalc;
     }
@@ -137,24 +138,27 @@ function moveFish(fish) {
         fish.x += deltaX;
     }
 
-    var borderCalc = fish.radius + 5;
-
-    if (fish.x > c.gameWidth - borderCalc) {
-        fish.x = c.gameWidth - borderCalc;
+    var borderCalc = 50;
+    if (fish.x > c.gameWidth + borderCalc) {
+        fishs.splice(util.findIndex(fishs, fish.id), 1);
+        nbFishs--;
     }
-    if (fish.y > c.gameHeight - borderCalc) {
-        fish.y = c.gameHeight - borderCalc;
+    if (fish.y > c.gameHeight + borderCalc) {
+        fishs.splice(util.findIndex(fishs, fish.id), 1);
+        nbFishs--;
     }
-    if (fish.x < borderCalc) {
-        fish.x = borderCalc;
+    if (fish.x < -borderCalc) {
+        fishs.splice(util.findIndex(fishs, fish.id), 1);
+        nbFishs--;
     }
-    if (fish.y < borderCalc) {
-        fish.y = borderCalc;
+    if (fish.y < -borderCalc) {
+        fishs.splice(util.findIndex(fishs, fish.id), 1);
+        nbFishs--;
     }
 }
 
 function balanceFishs() {
-    var fishsToAdd = c.maxFishs - fishs.length;
+    var fishsToAdd = (c.maxFishs - nbFishs) > 5 ? 5 : c.maxFishs - nbFishs;
 
     if (fishsToAdd > 0) {
         addFishs(fishsToAdd);
@@ -255,16 +259,16 @@ io.on('connection', function (socket) {
 });
 
 function tickPlayer(currentPlayer) {
-    if (currentPlayer.type == 'player' && currentPlayer.lastHeartbeat < new Date().getTime() - c.maxHeartbeatInterval) {
-        sockets[currentPlayer.id].emit('kick', 'Aucune activité depuis ' + (c.maxHeartbeatInterval / 1000) + ' secondes. Vous avez été déconnecté.');
-        sockets[currentPlayer.id].disconnect();
-    }
-
     function funcCollide(f) {
-        return SAT.pointInCircle(new V(f.x, f.y), playerCircle);
+        return SAT.testCircleCircle(new C(new V(f.x, f.y), f.radius), playerCircle);
     }
+    if (currentPlayer.type == 'player') {
+        if (currentPlayer.lastHeartbeat < new Date().getTime() - c.maxHeartbeatInterval) {
+            sockets[currentPlayer.id].emit('kick', 'Aucune activité depuis ' + (c.maxHeartbeatInterval / 1000) + ' secondes. Vous avez été déconnecté.');
+            sockets[currentPlayer.id].disconnect();
+        }
 
-    movePlayer(currentPlayer);
+        movePlayer(currentPlayer);
 //    function check(user) {
 //            if (user.size > 10 && user.id !== currentPlayer.id) {
 //                var response = new SAT.Response();
@@ -304,33 +308,33 @@ function tickPlayer(currentPlayer) {
 //        }
 //    }
 
-    var playerCircle = new C(
-            new V(currentPlayer.x, currentPlayer.y),
-            currentPlayer.radius
-            );
-    var fishCollision = fishs.map(funcCollide)
-            .reduce(function (a, b, c) {
-                return b ? a.concat(c) : a;
-            }, []);
-    if (fishCollision > 0) {
-        users.splice(currentPlayer.id, 1);
+        var playerCircle = new C(
+                new V(currentPlayer.x, currentPlayer.y),
+                currentPlayer.radius
+                );
+        var fishCollision = fishs.map(funcCollide)
+                .reduce(function (a, b, c) {
+                    return b ? a.concat(c) : a;
+                }, []);
+        if (fishCollision > 0) {
+            users.splice(currentPlayer.id, 1);
 //        io.emit('playerDied', {name: currentPlayer.name});
-        sockets[currentPlayer.id].emit('RIP');
-        fishs.splice(fishCollision, 1);
-    }
+            sockets[currentPlayer.id].emit('RIP');
+            fishs.splice(fishCollision, 1);
+        }
 
-    if (typeof (currentPlayer.speed) == "undefined") {
-        currentPlayer.speed = 6.25;
-    }
-    playerCircle.r = currentPlayer.radius;
-    tree.clear();
-    users.forEach(tree.put);
+        if (typeof (currentPlayer.speed) == "undefined") {
+            currentPlayer.speed = 4;
+        }
+        playerCircle.r = currentPlayer.radius;
+        tree.clear();
+        users.forEach(tree.put);
 //        var playerCollisions = [];
 
 //        var otherUsers = tree.get(currentPlayer, check);
 
 //        playerCollisions.forEach(collisionCheck);
-
+    }
 }
 
 function moveloop() {
@@ -345,8 +349,14 @@ function moveloop() {
 
 function gameloop() {
     if (users.length > 0) {
-        if (isNaN(leaderboard) || leaderboard.length !== users.length) {
-            leaderboard = users.length;
+        var nbPlayers = 0;
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].type == 'player') {
+                nbPlayers++;
+            }
+        }
+        if (isNaN(leaderboard) || leaderboard.length !== nbPlayers) {
+            leaderboard = nbPlayers;
             leaderboardChanged = true;
         }
 //        for (i = 0; i < users.length; i++) {
@@ -379,7 +389,7 @@ function sendUpdates() {
                 });
         var visibleUsers = users
                 .map(function (f) {
-                    if (f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
+                    if (f.type == 'player' && f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
                             f.x - f.radius < u.x + u.screenWidth / 2 + 20 &&
                             f.y + f.radius > u.y - u.screenHeight / 2 - 20 &&
                             f.y - f.radius < u.y + u.screenHeight / 2 + 20) {
@@ -420,7 +430,7 @@ function sendUpdates() {
     leaderboardChanged = false;
 }
 
-setInterval(moveloop, 1000 / 150);
+setInterval(moveloop, 1000 / 60);
 setInterval(gameloop, 1000);
 setInterval(sendUpdates, 1000 / c.networkUpdateFactor);
 

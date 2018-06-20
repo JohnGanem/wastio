@@ -10,7 +10,7 @@ module.exports = {
     spin: -Math.PI,
     enemySpin: -Math.PI,
     mobile: false,
-    fishSides: 20,
+    fishsSides: 20,
 
     // Canvas
     screenWidth: window.innerWidth,

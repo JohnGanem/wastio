@@ -68,7 +68,7 @@ gulp.task('run', ['build'], function () {
         script: './server/server.js',
         cwd: "./bin/",
         args: ["config.json"],
-        ext: 'html js css'
+        ext: 'html js css json'
     })
     .on('restart', function () {
         util.log('server restarted!');
@@ -81,7 +81,7 @@ gulp.task('run-only', function () {
         script: './server/server.js',
         cwd: "./bin/",
         args: ["config.json"],
-        ext: 'html js css'
+        ext: 'html js css json'
     })
     .on('restart', function () {
         util.log('server restarted!');
