@@ -387,7 +387,7 @@ function printTimeLeft(timeout) {
     var timeLeft = getTimeLeft(timeout);
     var minutsLeft = Math.trunc(timeLeft / 60);
     var secondsLeft = timeLeft % 60;
-    return minutsLeft + ":" + secondsLeft;
+    return ("0" + minutsLeft).slice(-2) + ":" + ("0" + secondsLeft).slice(-2);
 }
 
 function getTimeLeft(timeout) {
