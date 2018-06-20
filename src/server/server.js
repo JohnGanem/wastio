@@ -14,13 +14,8 @@ var c = require('../../config.json');
 // Import utilities.
 var util = require('./lib/util');
 
-// Import quadtree.
-var quadtree = require('simple-quadtree');
-
 // Call sqlinfo.
 var s = c.sqlinfo;
-
-var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);
 
 var users = [];
 var fishs = [];
@@ -288,13 +283,6 @@ function tickPlayer(currentPlayer) {
             currentPlayer.speed = 4;
         }
         playerCircle.r = currentPlayer.radius;
-        tree.clear();
-        users.forEach(tree.put);
-//        var playerCollisions = [];
-
-//        var otherUsers = tree.get(currentPlayer, check);
-
-//        playerCollisions.forEach(collisionCheck);
     }
 }
 
