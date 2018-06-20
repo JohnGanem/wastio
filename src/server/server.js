@@ -334,23 +334,17 @@ function gameloop() {
                 }
                 setTimeout(function () {
                     sockets[id].emit('WIN');
-                    sockets[id].disconnect();
                 }, 2500);
             } else {
                 leaderboard = "Il y a 1 joueur connecté !";
-                timeoutStart = setTimeout(function () {
-                    gameStart = true;
-                    leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
-                    leaderboardChanged = true;
-                }, 1000);
-
+                clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 2 && gameStart == false) {
             timeoutStart = setTimeout(function () {
                 gameStart = true;
                 leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
                 leaderboardChanged = true;
-            }, 60000);
+            }, 10000);
             leaderboard = "Il y a 2 joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
             if (nbPlayers == 100 && gameStart == false) {
@@ -369,7 +363,7 @@ function gameloop() {
             if (typeof fishs !== 'undefined' && fishs.length > 0) {
                 fishs = [];
             }
-            if (nbPlayers >= 1) {
+            if (nbPlayers >= 2) {
                 leaderboardChanged = true;
                 leaderboard = "Il y a " + nbPlayers + " joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
                 console.log("[INFO] Game start in " + printTimeLeft(timeoutStart));
