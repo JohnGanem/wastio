@@ -340,16 +340,16 @@ function gameloop() {
                     sockets[id].emit('WIN');
                 }, 2500);
             } else {
-                leaderboard = "Il y a 1 joueur connecté !";
+                leaderboard = "Il y a 1 joueur connecté";
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 2 && gameStart == false) {
             timeoutStart = setTimeout(function () {
                 gameStart = true;
-                leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
+                leaderboard = "Il reste " + nbPlayers + " joueurs";
                 leaderboardChanged = true;
             }, 10000);
-            leaderboard = "Il y a 2 joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+            leaderboard = "Il y a 2 joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
             if (nbPlayers == 100 && gameStart == false) {
                 clearTimeout(timeoutStart);
@@ -357,7 +357,7 @@ function gameloop() {
             if (gameStart) {
                 leaderboard = "Il reste " + nbPlayers + " joueurs";
             } else {
-                leaderboard = "Il y a " + nbPlayers + " joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+                leaderboard = "Il y a " + nbPlayers + " joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
             }
         }
     } else {
@@ -369,7 +369,7 @@ function gameloop() {
             }
             if (nbPlayers >= 2) {
                 leaderboardChanged = true;
-                leaderboard = "Il y a " + nbPlayers + " joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+                leaderboard = "Il y a " + nbPlayers + " joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
                 console.log("[INFO] Game start in " + printTimeLeft(timeoutStart));
             }
         }
