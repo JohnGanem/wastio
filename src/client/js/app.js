@@ -286,7 +286,7 @@ function setupSocket(socket) {
         window.setTimeout(function () {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
-            global.died = false;
+            global.win = false;
             if (global.animLoopHandle) {
                 window.cancelAnimationFrame(global.animLoopHandle);
                 global.animLoopHandle = undefined;
