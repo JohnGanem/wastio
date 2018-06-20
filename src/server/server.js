@@ -268,44 +268,6 @@ function tickPlayer(currentPlayer) {
         }
 
         movePlayer(currentPlayer);
-//    function check(user) {
-//            if (user.size > 10 && user.id !== currentPlayer.id) {
-//                var response = new SAT.Response();
-//                var collided = SAT.testCircleCircle(playerCircle,
-//                        new C(new V(user.x, user.y), user.radius),
-//                        response);
-//                if (collided) {
-//                    response.aUser = currentPlayer;
-//                    response.bUser = {
-//                        id: user.id,
-//                        name: user.name,
-//                        x: user.x,
-//                        y: user.y,
-//                        num: i,
-//                        size: user.size
-//                    };
-//                    playerCollisions.push(response);
-//                }
-//            }
-//        return true;
-//    }
-//
-//    function collisionCheck(collision) {
-//        if (collision.aUser.size > collision.bUser.size * 1.1 && collision.aUser.radius > Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2)) * 1.75) {
-//            console.log('[DEBUG] Killing user: ' + collision.bUser.id);
-//            console.log('[DEBUG] Collision info:');
-//            console.log(collision);
-//
-//            var numUser = util.findIndex(users, collision.bUser.id);
-//            if (numUser > -1) {
-//                    users.splice(numUser, 1);
-//                    io.emit('playerDied', {name: collision.bUser.name});
-//                    sockets[collision.bUser.id].emit('RIP');
-//            }
-//            currentPlayer.size += collision.bUser.size;
-//            collision.aUser.size += collision.bUser.size;
-//        }
-//    }
 
         var playerCircle = new C(
                 new V(currentPlayer.x, currentPlayer.y),
@@ -316,8 +278,8 @@ function tickPlayer(currentPlayer) {
                     return b ? a.concat(c) : a;
                 }, []);
         if (fishCollision > 0) {
-            users.splice(currentPlayer.id, 1);
-//        io.emit('playerDied', {name: currentPlayer.name});
+            console.log('[DEBUG] Killing user: ' + currentPlayer.name);
+            users.splice(util.findIndex(users, currentPlayer.id), 1);
             sockets[currentPlayer.id].emit('RIP');
             fishs.splice(fishCollision, 1);
         }
@@ -388,7 +350,12 @@ function gameloop() {
                 }, 2500);
             } else {
                 leaderboard = "Il y a 1 joueur connecté !";
-                clearTimeout(timeoutStart);
+                timeoutStart = setTimeout(function () {
+                    gameStart = true;
+                    leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
+                    leaderboardChanged = true;
+                }, 1000);
+
             }
         } else if (nbPlayers == 2 && gameStart == false) {
             timeoutStart = setTimeout(function () {
@@ -414,7 +381,7 @@ function gameloop() {
             if (typeof fishs !== 'undefined' && fishs.length > 0) {
                 fishs = [];
             }
-            if (nbPlayers >= 2) {
+            if (nbPlayers >= 1) {
                 leaderboardChanged = true;
                 leaderboard = "Il y a " + nbPlayers + " joueurs connectés !<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
                 console.log("[INFO] Game start in " + printTimeLeft(timeoutStart));

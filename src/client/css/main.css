@@ -296,3 +296,7 @@ input [type="image"]:focus{
     outline: 1px solid transparent;
     border-style: none;
 }
+
+#bg {
+    display: none;
+}

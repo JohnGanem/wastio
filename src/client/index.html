@@ -1,48 +1,48 @@
 <!doctype html>
 <html lang="fr">
-<head>
-    <!-- Meta Properties -->
-    <meta charset="UTF-8">
-    <title>Wast.io</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/main.css" />
-</head>
-<body>
-    <div id="gameAreaWrapper">
-        <div id="status"><span class="title">Informations</span></div>
-        <canvas tabindex="1" id="cvs"></canvas>
-    </div>
-    <div id="startMenuWrapper">
-        <div id="startMenu">
-            <p>Wast.io</p>
-            <input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="playerNameInput" maxlength="25" />
-            <b class="input-error">Nick must be alphanumeric characters only!</b>
-            <br />
-            <button id="startButton">Play</button>
-            <button id="spectateButton">Spectate</button>
-            <button id="settingsButton">Settings</button>
-            <br />
-            <div id="settings">
-                <h3>Settings</h3>
-                <ul>
-                    <label><input id="visBord" type="checkbox" checked>Show border</label>
-                    <label><input id="darkMode" type="checkbox">Toggle Dark Mode</label>
-                </ul>
-            </div>
-            <div id="instructions">
-                <h3>Gameplay</h3>
-                <ul>
-                    <li>Move your mouse on the screen to move your character.</li>
-                    <li>Eat food and other players in order to grow your character (food respawns every time a player eats it).</li>
-                    <li>A player's mass is the number of food particles eaten.</li>
-                    <li>Objective: Try to get fat and eat other players.</li>
-                </ul>
+    <head>
+        <!-- Meta Properties -->
+        <meta charset="UTF-8">
+        <title>Wast.io</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+        <!-- CSS -->
+        <link rel="stylesheet" href="css/main.css" />
+    </head>
+    <body>
+        <div id="gameAreaWrapper">
+            <div id="status"><span class="title">Informations</span></div>
+            <canvas tabindex="1" id="cvs"></canvas>
+        </div>
+        <div id="startMenuWrapper">
+            <div id="startMenu">
+                <p>Wast.io</p>
+                <input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="playerNameInput" maxlength="25" />
+                <b class="input-error">Nick must be alphanumeric characters only!</b>
+                <br />
+                <button id="startButton">Play</button>
+                <button id="spectateButton">Spectate</button>
+                <button id="settingsButton">Settings</button>
+                <br />
+                <div id="settings">
+                    <h3>Settings</h3>
+                    <ul>
+                        <label><input id="visBord" type="checkbox" checked>Show border</label>
+                    </ul>
+                </div>
+                <div id="instructions">
+                    <h3>Gameplay</h3>
+                    <ul>
+                        <li>Move your mouse on the screen to move your character.</li>
+                        <li>Eat food and other players in order to grow your character (food respawns every time a player eats it).</li>
+                        <li>A player's mass is the number of food particles eaten.</li>
+                        <li>Objective: Try to get fat and eat other players.</li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-    <!-- JS -->
-    <script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
-    <script src="js/app.js"></script>
-</body>
+        <img id="bg" src="img/bg.jpg">
+        <!-- JS -->
+        <script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
+        <script src="js/app.js"></script>
+    </body>
 </html>

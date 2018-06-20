@@ -136,21 +136,6 @@ visibleBorderSetting.onchange = function () {
         global.borderDraw = false;
     }
 };
-var toggleDarkMode = document.getElementById('darkMode');
-toggleDarkMode.onchange = function () {
-    var LIGHT = '#f2fbff',
-            DARK = '#181818';
-    var LINELIGHT = '#000000',
-            LINEDARK = '#ffffff';
-
-    if (global.backgroundColor === LIGHT) {
-        global.backgroundColor = DARK;
-        global.lineColor = LINEDARK;
-    } else {
-        global.backgroundColor = LIGHT;
-        global.lineColor = LINELIGHT;
-    }
-};
 //var showSizeSetting = document.getElementById('showSize');
 //showSizeSetting.onchange = settings.toggleSize;
 
@@ -162,6 +147,10 @@ toggleDarkMode.onchange = function () {
 
 var c = window.canvas.cv;
 var graph = c.getContext('2d');
+graph.mozImageSmoothingEnabled = false;
+graph.webkitImageSmoothingEnabled = false;
+graph.msImageSmoothingEnabled = false;
+graph.imageSmoothingEnabled = false;
 
 //$( "#feed" ).click(function() {
 //    socket.emit('1');
@@ -529,8 +518,7 @@ function gameLoop() {
         graph.fillText('Vous avez perdu !', global.screenWidth / 2, global.screenHeight / 2);
     } else if (!global.disconnected) {
         if (global.gameStart) {
-            graph.fillStyle = global.backgroundColor;
-            graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
+            graph.drawImage(document.getElementById('bg'), 0, 0, (global.gameWidth), (global.gameHeight));
 
             drawgrid();
             fishs.forEach(drawFish);
