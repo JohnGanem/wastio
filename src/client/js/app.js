@@ -129,8 +129,28 @@ window.canvas = new Canvas();
 //window.chat = new ChatClient();
 
 var visibleBorderSetting = document.getElementById('visBord');
-visibleBorderSetting.onchange = settings.toggleBorder;
+visibleBorderSetting.onchange = function () {
+    if (!global.borderDraw) {
+        global.borderDraw = true;
+    } else {
+        global.borderDraw = false;
+    }
+};
+var toggleDarkMode = document.getElementById('darkMode');
+toggleDarkMode.onchange = function () {
+    var LIGHT = '#f2fbff',
+            DARK = '#181818';
+    var LINELIGHT = '#000000',
+            LINEDARK = '#ffffff';
 
+    if (global.backgroundColor === LIGHT) {
+        global.backgroundColor = DARK;
+        global.lineColor = LINEDARK;
+    } else {
+        global.backgroundColor = LIGHT;
+        global.lineColor = LINELIGHT;
+    }
+};
 //var showSizeSetting = document.getElementById('showSize');
 //showSizeSetting.onchange = settings.toggleSize;
 
@@ -184,7 +204,7 @@ function setupSocket(socket) {
 //        window.chat.player = player;
         socket.emit('gotit', player);
         global.gameStart = true;
-        debug('Game started at: ' + global.gameStart);
+//        debug('Game started at: ' + global.gameStart);
 //        window.chat.addSystemLine('Connected to the game!');
 //        window.chat.addSystemLine('Type <b>-help</b> for a list of commands.');
 //        if (global.mobile) {
@@ -196,6 +216,7 @@ function setupSocket(socket) {
     socket.on('gameSetup', function (data) {
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
+        global.playerBorder = data.playerBorder;
         resize();
     });
 
@@ -215,7 +236,7 @@ function setupSocket(socket) {
         leaderboard = data.leaderboard;
         var status = '<span class="title">Informations générales</span>';
         status += '<br />';
-        status += '<span class="me">Il reste ' + leaderboard + " joueurs !</span>";
+        status += '<span class="me">' + leaderboard + "</span>";
         //status += '<br />Players: ' + data.players;
         document.getElementById('status').innerHTML = status;
     });
@@ -427,43 +448,51 @@ function drawgrid() {
 function drawborder() {
     graph.lineWidth = 1;
     graph.strokeStyle = playerConfig.borderColor;
+    var gameWidth = global.gameWidth - global.playerBorder;
+    var gameHeight = global.gameHeight - global.playerBorder;
+    var screenWidth = (global.screenWidth / 2 + global.playerBorder);
+    var screenHeight = (global.screenHeight / 2 + global.playerBorder);
 
     // Left-vertical.
-    if (player.x <= global.screenWidth / 2) {
+    if (player.x <= screenWidth) {
         graph.beginPath();
-        graph.moveTo(global.screenWidth / 2 - player.x, 0 ? player.y > global.screenHeight / 2 : global.screenHeight / 2 - player.y);
-        graph.lineTo(global.screenWidth / 2 - player.x, global.gameHeight + global.screenHeight / 2 - player.y);
+        graph.moveTo(screenWidth - player.x,
+                0 ? player.y > global.screenHeight / 2 : screenHeight - player.y);
+        graph.lineTo(screenWidth - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
         graph.strokeStyle = global.lineColor;
         graph.stroke();
     }
 
     // Top-horizontal.
-    if (player.y <= global.screenHeight / 2) {
+    if (player.y <= screenHeight) {
         graph.beginPath();
-        graph.moveTo(0 ? player.x > global.screenWidth / 2 : global.screenWidth / 2 - player.x, global.screenHeight / 2 - player.y);
-        graph.lineTo(global.gameWidth + global.screenWidth / 2 - player.x, global.screenHeight / 2 - player.y);
+        graph.moveTo(0 ? player.x > global.screenWidth / 2 : screenWidth - player.x,
+                screenHeight - player.y);
+        graph.lineTo(gameWidth + global.screenWidth / 2 - player.x,
+                screenHeight - player.y);
         graph.strokeStyle = global.lineColor;
         graph.stroke();
     }
 
     // Right-vertical.
-    if (global.gameWidth - player.x <= global.screenWidth / 2) {
+    if (gameWidth - player.x <= global.screenWidth / 2) {
         graph.beginPath();
-        graph.moveTo(global.gameWidth + global.screenWidth / 2 - player.x,
-                global.screenHeight / 2 - player.y);
-        graph.lineTo(global.gameWidth + global.screenWidth / 2 - player.x,
-                global.gameHeight + global.screenHeight / 2 - player.y);
+        graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
+                screenHeight - player.y);
+        graph.lineTo(gameWidth + global.screenWidth / 2 - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
         graph.strokeStyle = global.lineColor;
         graph.stroke();
     }
 
     // Bottom-horizontal.
-    if (global.gameHeight - player.y <= global.screenHeight / 2) {
+    if (gameHeight - player.y <= global.screenHeight / 2) {
         graph.beginPath();
-        graph.moveTo(global.gameWidth + global.screenWidth / 2 - player.x,
-                global.gameHeight + global.screenHeight / 2 - player.y);
-        graph.lineTo(global.screenWidth / 2 - player.x,
-                global.gameHeight + global.screenHeight / 2 - player.y);
+        graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
+        graph.lineTo(screenWidth - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
         graph.strokeStyle = global.lineColor;
         graph.stroke();
     }

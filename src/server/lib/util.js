@@ -81,41 +81,33 @@ exports.randomBorder = function (start, radius) {
 };
 
 // generate a random target at the border
-exports.randomTargetBorder = function (start, position, radius) {
+exports.randomTargetBorder = function (start, radius) {
     var coordinates;
-    do {
-        switch (start) {
-            case 1:
-                coordinates = {
-                    x: radius,
-                    y: exports.randomInRange(radius, cfg.gameHeight - radius)
-                };
-                break;
-            case 2:
-                coordinates = {
-                    x: exports.randomInRange(radius, cfg.gameWidth - radius),
-                    y: radius
-                };
-                break;
-            case 3:
-                coordinates = {
-                    x: cfg.gameWidth - radius,
-                    y: exports.randomInRange(radius, cfg.gameHeight - radius)
-                };
-                break;
-            default:
-                coordinates = {
-                    x: exports.randomInRange(radius, cfg.gameWidth - radius),
-                    y: cfg.gameHeight - radius
-                };
-        }
-    } while (Math.abs(position.x - coordinates.x) < cfg.playerBorder || Math.abs(position.y - coordinates.y) < cfg.playerBorder);
-
-    if (position.x > coordinates.x) {
-        coordinates.x = -coordinates.x;
-    }
-    if (position.y > coordinates.y) {
-        coordinates.y = -coordinates.y;
+    var angle = cfg.angleProjection;
+    switch (start) {
+        case 1:
+            coordinates = {
+                x: -1,
+                y: exports.randomInRange(-angle, angle)
+            };
+            break;
+        case 2:
+            coordinates = {
+                x: exports.randomInRange(-angle, angle),
+                y: -1
+            };
+            break;
+        case 3:
+            coordinates = {
+                x: 1,
+                y: exports.randomInRange(-angle, angle)
+            };
+            break;
+        default:
+            coordinates = {
+                x: exports.randomInRange(-angle, angle),
+                y: 1
+            };
     }
     return coordinates;
 };

@@ -1,7 +1,6 @@
 {
     "host": "0.0.0.0",
     "port": 3000,
-    "logpath": "logger.php",
     "defaultPlayerSize": 20,
     "fishs": {
         "fill": "#33ff33",
@@ -11,18 +10,22 @@
             "from": 20,
             "to": 150
         },
-        "splitSize": 180
+        "defaultSpeed": {
+            "from": 3,
+            "to": 50
+        }
     },
     "gameWidth": 2000,
     "gameHeight": 2000,
     "playerBorder": 250,
     "adminPass": "DEFAULT",
     "maxFishs": 60,
+    "angleProjection": 2,
     "slowBase": 4.5,
     "logChat": 0,
     "networkUpdateFactor": 40,
     "maxHeartbeatInterval": 5000,
-    "massLossRate": 1,
+    "sizeLossRate": 1,
     "sqlinfo": {
         "connectionLimit": 100,
         "host": "DEFAULT",

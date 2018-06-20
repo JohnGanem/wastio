@@ -24,14 +24,17 @@ var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);
 
 var users = [];
 var fishs = [];
-var nbFishs = 0;
 var sockets = {};
 
+var timeoutStart;
+var nbPlayers = 0;
 var leaderboard;
 var leaderboardChanged = false;
 
 var V = SAT.Vector;
 var C = SAT.Circle;
+
+var gameStart = false;
 
 if (s.host !== "DEFAULT") {
     var pool = sql.createConnection({
@@ -59,8 +62,8 @@ function addFishs(toAdd) {
         var radius = util.sizeToRadius(size);
         var startLocation = util.randomInRange(0, 4);
         var position = util.randomBorder(startLocation, radius);
-        var target = util.randomTargetBorder(startLocation, position, radius);
-        var speed = util.randomInRange(1, 40) / 10;
+        var target = util.randomTargetBorder(startLocation, radius);
+        var speed = util.randomInRange(c.fishs.defaultSpeed.from, c.fishs.defaultSpeed.to) / 10;
         fishs.push({
             id: ((new Date()).getTime() + '' + fishs.length) >>> 0,
             target: target,
@@ -74,7 +77,6 @@ function addFishs(toAdd) {
             strokeWidth: c.fishs.strokeWidth,
             speed: speed
         });
-        nbFishs++;
     }
 }
 
@@ -141,24 +143,20 @@ function moveFish(fish) {
     var borderCalc = 50;
     if (fish.x > c.gameWidth + borderCalc) {
         fishs.splice(util.findIndex(fishs, fish.id), 1);
-        nbFishs--;
     }
     if (fish.y > c.gameHeight + borderCalc) {
         fishs.splice(util.findIndex(fishs, fish.id), 1);
-        nbFishs--;
     }
     if (fish.x < -borderCalc) {
         fishs.splice(util.findIndex(fishs, fish.id), 1);
-        nbFishs--;
     }
     if (fish.y < -borderCalc) {
         fishs.splice(util.findIndex(fishs, fish.id), 1);
-        nbFishs--;
     }
 }
 
 function balanceFishs() {
-    var fishsToAdd = (c.maxFishs - nbFishs) > 5 ? 5 : c.maxFishs - nbFishs;
+    var fishsToAdd = (c.maxFishs - fishs.length) > 5 ? 5 : c.maxFishs - fishs.length;
 
     if (fishsToAdd > 0) {
         addFishs(fishsToAdd);
@@ -224,7 +222,8 @@ io.on('connection', function (socket) {
 //            io.emit('playerJoin', {name: currentPlayer.name});
             socket.emit('gameSetup', {
                 gameWidth: c.gameWidth,
-                gameHeight: c.gameHeight
+                gameHeight: c.gameHeight,
+                playerBorder: c.playerBorder
             });
             console.log('Total players: ' + users.length);
         }
@@ -347,27 +346,78 @@ function moveloop() {
     }
 }
 
+function countPlayer() {
+    var nb = 0;
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].type == 'player') {
+            nb++;
+        }
+    }
+    return nb;
+}
+
 function gameloop() {
-    if (users.length > 0) {
-        var nbPlayers = 0;
-        for (var i = 0; i < users.length; i++) {
-            if (users[i].type == 'player') {
-                nbPlayers++;
+    /* Leaderboard et déroulement de la partie */
+    var nbPlayersNow = countPlayer();
+    if (nbPlayersNow != nbPlayers) {
+        nbPlayers = nbPlayersNow;
+        leaderboardChanged = true;
+        if (nbPlayers == 0) {
+            leaderboard = "Il n'y a aucun joueur !";
+            if (gameStart) {
+                gameStart = false;
+            } else {
+                clearTimeout(timeoutStart);
             }
+        } else if (nbPlayers == 1) {
+            if (gameStart) {
+                gameStart = false;
+                leaderboard = "Nous avons un gagnant !";
+            } else {
+                leaderboard = "Il y a 1 joueur connecté !";
+                clearTimeout(timeoutStart);
+            }
+        } else if (nbPlayers == 2 && gameStart == false) {
+            leaderboard = "Il y a 2 joueurs connectés !";
+            timeoutStart = setTimeout(function () {
+                gameStart = true;
+            }, 30000);
+        } else {
+            if (nbPlayers == 100 && gameStart == false) {
+                clearTimeout(timeoutStart);
+            }
+            leaderboard = "Il y a " + nbPlayers + " joueurs connectés !";
         }
-        if (isNaN(leaderboard) || leaderboard.length !== nbPlayers) {
-            leaderboard = nbPlayers;
+    }
+    if (gameStart) {
+        balanceFishs();
+    } else {
+        if (typeof fishs !== 'undefined' && fishs.length > 0) {
+            fishs = [];
+        }
+        if (nbPlayers >= 2) {
             leaderboardChanged = true;
+            leaderboard += "<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         }
-//        for (i = 0; i < users.length; i++) {
+    }
+    //        for (i = 0; i < users.length; i++) {
 //                if (users[i].size * (1 - (c.sizeLossRate / 1000)) > c.defaultPlayerSize && users[i].size > c.minSizeLoss) {
 //                    var sizeLoss = users[i].size * (1 - (c.sizeLossRate / 1000));
 //                    users[i].size -= users[i].size - sizeLoss;
 //                    users[i].size = sizeLoss;
 //                }
 //        }
-    }
-    balanceFishs();
+}
+
+function printTimeLeft(timeout) {
+    var secondsLeft = getTimeLeft(timeout);
+    var minutsLeft = Math.trunc(secondsLeft / 60);
+    secondsLeft = secondsLeft % 60;
+    return minutsLeft + ":" + secondsLeft;
+}
+
+function getTimeLeft(timeout) {
+    return Math.ceil((timeout._idleStart + timeout._idleTimeout - Date.now()) / 1000);
 }
 
 function sendUpdates() {
@@ -430,7 +480,9 @@ function sendUpdates() {
     leaderboardChanged = false;
 }
 
-setInterval(moveloop, 1000 / 60);
+if (gameStart) {
+    setInterval(moveloop, 1000 / 60);
+}
 setInterval(gameloop, 1000);
 setInterval(sendUpdates, 1000 / c.networkUpdateFactor);
 
