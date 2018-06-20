@@ -107,7 +107,7 @@ function movePlayer(player) {
     if (!isNaN(deltaX)) {
         player.x += deltaX;
     }
-    var borderCalc = radius / 3 + 150;
+    var borderCalc = radius / 3 + c.playerBorder;
     if (player.x > c.gameWidth - borderCalc) {
         player.x = c.gameWidth - borderCalc;
     }

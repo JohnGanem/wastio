@@ -393,18 +393,9 @@ function drawPlayers() {
         graph.textBaseline = 'middle';
         graph.font = 'bold ' + fontSize + 'px sans-serif';
 
-        if (global.toggleSizeState === 0) {
-            graph.strokeText(nameCell, circle.x, circle.y);
-            graph.fillText(nameCell, circle.x, circle.y);
-        } else {
-            graph.strokeText(nameCell, circle.x, circle.y);
-            graph.fillText(nameCell, circle.x, circle.y);
-            graph.font = 'bold ' + Math.max(fontSize / 3 * 2, 10) + 'px sans-serif';
-            if (nameCell.length === 0)
-                fontSize = 0;
-            graph.strokeText(Math.round(userCurrent.size), circle.x, circle.y + fontSize);
-            graph.fillText(Math.round(userCurrent.size), circle.x, circle.y + fontSize);
-        }
+        graph.strokeText(nameCell, circle.x, circle.y);
+        graph.fillText(nameCell, circle.x, circle.y);
+
     }
 }
 
