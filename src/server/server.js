@@ -326,13 +326,17 @@ function gameloop() {
                 gameStart = false;
                 leaderboard = "Nous avons un gagnant !";
                 var id;
+                var name;
                 for (var i = 0; i < users.length; i++) {
                     if (users[i].type == 'player') {
                         id = users[i].id;
+                        name = users[i].name;
                         break;
                     }
                 }
                 setTimeout(function () {
+                    console.log('[DEBUG] User win: ' + name);
+                    users.splice(util.findIndex(users, id), 1);
                     sockets[id].emit('WIN');
                 }, 2500);
             } else {
