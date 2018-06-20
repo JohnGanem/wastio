@@ -47,17 +47,18 @@ function validNick() {
 }
 
 window.onload = function () {
-
     var btn = document.getElementById('startButton'),
             btnS = document.getElementById('spectateButton'),
             nickErrorText = document.querySelector('#startMenu .input-error');
 
+    if (!global.mobile) {
+        btnS.style.display = "inline-block";
+    }
     btnS.onclick = function () {
         startGame('spectate');
     };
 
     btn.onclick = function () {
-
         // Checks if the nick is valid.
         if (validNick()) {
             nickErrorText.style.opacity = 0;
@@ -546,8 +547,8 @@ function resize() {
     if (!socket)
         return;
 
-    player.screenWidth = c.width = global.screenWidth = global.playerType == 'player' ? window.innerWidth : global.gameWidth;
-    player.screenHeight = c.height = global.screenHeight = global.playerType == 'player' ? window.innerHeight : global.gameHeight;
+    player.screenWidth = c.width = global.screenWidth = global.playerType == 'player' ? window.innerWidth * 2 : global.gameWidth;
+    player.screenHeight = c.height = global.screenHeight = global.playerType == 'player' ? window.innerHeight * 2 : global.gameHeight;
 
     if (global.playerType == 'spectate') {
         player.x = global.gameWidth / 2;

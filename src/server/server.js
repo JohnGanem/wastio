@@ -94,7 +94,7 @@ function movePlayer(player) {
     var deltaY = speed * Math.sin(deg) / slowDown;
     var deltaX = speed * Math.cos(deg) / slowDown;
 
-    if (speed > 6.25) {
+    if (speed > 4.5) {
         player.speed -= 0.5;
     }
     if (dist < (50 + radius)) {
