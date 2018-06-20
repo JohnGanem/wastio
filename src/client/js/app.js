@@ -576,7 +576,7 @@ function gameLoop() {
 //                graph.fillText('You were kicked!', global.screenWidth / 2, global.screenHeight / 2);
 //            }
 //        } else {
-        graph.fillText('Déconnecté !', global.screenWidth / 2, global.screenHeight / 2);
+        graph.fillText('Connexion perdue !', global.screenWidth / 2, global.screenHeight / 2);
 //        }
     }
 }

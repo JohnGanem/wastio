@@ -280,7 +280,7 @@ function tickPlayer(currentPlayer) {
         }
 
         if (typeof (currentPlayer.speed) == "undefined") {
-            currentPlayer.speed = 0;
+            currentPlayer.speed = 4;
         }
         playerCircle.r = currentPlayer.radius;
     }
