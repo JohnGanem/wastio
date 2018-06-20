@@ -333,7 +333,7 @@ function gameloop() {
                     }
                 }
                 setTimeout(function () {
-                    sockets[id].emit('kick', 'Vous avez gagné !');
+                    sockets[id].emit('WIN');
                     sockets[id].disconnect();
                 }, 2500);
             } else {

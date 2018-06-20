@@ -276,9 +276,24 @@ function setupSocket(socket) {
                 window.cancelAnimationFrame(global.animLoopHandle);
                 global.animLoopHandle = undefined;
             }
-        }, 2500);
+        }, 1500);
     });
 
+    // Win
+    socket.on('WIN', function () {
+        global.gameStart = false;
+        global.win = true;
+        window.setTimeout(function () {
+            document.getElementById('gameAreaWrapper').style.opacity = 0;
+            document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            global.died = false;
+            if (global.animLoopHandle) {
+                window.cancelAnimationFrame(global.animLoopHandle);
+                global.animLoopHandle = undefined;
+            }
+        }, 1500);
+    });
+    
     socket.on('kick', function (data) {
         global.gameStart = false;
         reason = data;
@@ -516,6 +531,14 @@ function gameLoop() {
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 30px sans-serif';
         graph.fillText('Vous avez perdu !', global.screenWidth / 2, global.screenHeight / 2);
+    } else if (global.win) {
+        graph.fillStyle = '#333333';
+        graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
+
+        graph.textAlign = 'center';
+        graph.fillStyle = '#FFFFFF';
+        graph.font = 'bold 30px sans-serif';
+        graph.fillText('Vous avez gagné !', global.screenWidth / 2, global.screenHeight / 2);
     } else if (!global.disconnected) {
         if (global.gameStart) {
             graph.drawImage(document.getElementById('bg'), 0, 0, (global.gameWidth), (global.gameHeight));
@@ -536,7 +559,7 @@ function gameLoop() {
             graph.textAlign = 'center';
             graph.fillStyle = '#FFFFFF';
             graph.font = 'bold 30px sans-serif';
-            graph.fillText('Game Over!', global.screenWidth / 2, global.screenHeight / 2);
+            graph.fillText('Patientez...', global.screenWidth / 2, global.screenHeight / 2);
         }
     } else {
         graph.fillStyle = '#333333';
