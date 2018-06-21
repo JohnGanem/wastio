@@ -408,7 +408,7 @@ function gameloop() {
                 leaderboard = "Il reste " + nbPlayers + " joueurs";
                 leaderboardChanged = true;
                 clearTimeout(timeoutStart);
-            }, 10000);
+            }, 30000);
             leaderboard = "Il y a 2 joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
             if (nbPlayers == 100 && gameStart == false) {

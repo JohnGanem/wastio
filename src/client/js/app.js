@@ -539,7 +539,7 @@ function gameLoop() {
         graph.fillText('à observer', global.screenWidth / 2, global.screenHeight / 2 + 30);
     } else if (!global.disconnected) {
         if (global.gameStart) {
-            graph.drawImage(document.getElementById('bg'), (player.x - global.screenWidth / 2), (player.y - global.screenHeight / 2), (global.gameWidth+1000), (global.gameHeight+1000), -500, -500, (global.gameWidth), (global.gameHeight));
+            graph.drawImage(document.getElementById('bg'), (player.x - global.screenWidth / 2), (player.y - global.screenHeight / 2), (global.gameWidth + 1000), (global.gameHeight + 1000), -500, -500, (global.gameWidth + 1000), (global.gameHeight + 1000));
             if (global.gridDraw) {
                 drawgrid();
             }
