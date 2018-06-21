@@ -25,7 +25,7 @@ var sockets = {};
 
 var timeoutStart;
 var nbPlayers = 0;
-var leaderboard;
+var leaderboard = "Il n'y a aucun joueur !";
 var leaderboardChanged = false;
 
 var V = SAT.Vector;
@@ -162,29 +162,11 @@ function balanceFishs() {
 
 io.on('connection', function (socket) {
     console.log('A user connected!', socket.handshake.query.type);
-    var type = socket.handshake.query.type;
-    var position = util.centerPosition(radius);
-    var size = 0;
-    var radius = 0;
-
-    if (type === 'player') {
-        radius = util.sizeToRadius(c.defaultPlayerSize);
-        size = c.defaultPlayerSize;
-    }
-
+    var type;
     var currentPlayer = {
         id: socket.id,
-        x: position.x,
-        y: position.y,
-        radius: radius,
-        size: size,
         hue: Math.round(Math.random() * 360),
-        type: type,
-        lastHeartbeat: new Date().getTime(),
-        target: {
-            x: 0,
-            y: 0
-        }
+        lastHeartbeat: new Date().getTime()
     };
     socket.on('gotit', function (player) {
         console.log('[INFO] Player ' + player.name + ' connecting!');
@@ -214,15 +196,18 @@ io.on('connection', function (socket) {
             currentPlayer = player;
             currentPlayer.lastHeartbeat = new Date().getTime();
 //            io.emit('playerJoin', {name: currentPlayer.name});
-            if (gameStart && type == "player") {
-                type = "follower";
+            if ((gameStart && type == "player") || type == "follower") {
+                currentPlayer.idToFollow = util.randomInRange(0, players.length);
                 socket.emit('gameStarted', {
                     gameWidth: c.gameWidth,
                     gameHeight: c.gameHeight,
                     playerBorder: c.playerBorder,
-                    idToFollow: util.randomInRange(0, players.length)
+                    idToFollow: currentPlayer.idToFollow,
+                    screen: (type == "follower") ? false : true
                 });
+                type = "follower";
                 followers.push(currentPlayer);
+                leaderboardChanged = true;
             } else {
                 socket.emit('gameSetup', {
                     gameWidth: c.gameWidth,
@@ -234,6 +219,7 @@ io.on('connection', function (socket) {
                     console.log('Total players: ' + players.length);
                 } else {
                     spectators.push(currentPlayer);
+                    leaderboardChanged = true;
                 }
             }
         }
@@ -250,9 +236,10 @@ io.on('connection', function (socket) {
             currentPlayer.type = "follower";
         }
     });
-    socket.on('respawn', function () {
+    socket.on('respawn', function (data) {
         if (util.findIndex(players, currentPlayer.id) > -1) {
             players.splice(util.findIndex(players, currentPlayer.id), 1);
+            checkFollowers();
         }
         if (util.findIndex(spectators, currentPlayer.id) > -1) {
             spectators.splice(util.findIndex(spectators, currentPlayer.id), 1);
@@ -260,12 +247,32 @@ io.on('connection', function (socket) {
         if (util.findIndex(followers, currentPlayer.id) > -1) {
             followers.splice(util.findIndex(followers, currentPlayer.id), 1);
         }
+        type = data.type;
+        var position = util.centerPosition(radius);
+        var size = 0;
+        var radius = 0;
+
+        if (type === 'player') {
+            radius = util.sizeToRadius(c.defaultPlayerSize);
+            size = c.defaultPlayerSize;
+        }
+
+        currentPlayer.x = position.x;
+        currentPlayer.y = position.y;
+        currentPlayer.radius = radius;
+        currentPlayer.size = size;
+        currentPlayer.type = type;
+        currentPlayer.target = {
+            x: 0,
+            y: 0
+        };
         socket.emit('welcome', currentPlayer);
         console.log('[INFO] Player ' + currentPlayer.name + ' respawned!');
     });
     socket.on('disconnect', function () {
         if (util.findIndex(players, currentPlayer.id) > -1) {
             players.splice(util.findIndex(players, currentPlayer.id), 1);
+            checkFollowers();
         }
         if (util.findIndex(spectators, currentPlayer.id) > -1) {
             spectators.splice(util.findIndex(spectators, currentPlayer.id), 1);
@@ -306,8 +313,9 @@ function tickPlayer(currentPlayer) {
             }, []);
     if (fishCollision > 0) {
         console.log('[DEBUG] Killing player: ' + currentPlayer.name);
-//            players.splice(util.findIndex(players, currentPlayer.id), 1);
-//            sockets[currentPlayer.id].emit('RIP');
+        players.splice(util.findIndex(players, currentPlayer.id), 1);
+        sockets[currentPlayer.id].emit('RIP');
+        checkFollowers();
         fishs.splice(fishCollision, 1);
     }
 
@@ -315,6 +323,21 @@ function tickPlayer(currentPlayer) {
         currentPlayer.speed = 4;
     }
     playerCircle.r = currentPlayer.radius;
+}
+
+function checkFollowers() {
+    if (players.length == 0) {
+        for (let i = 0; i < followers.length; i++) {
+            sockets[followers[i].id].emit('gameEnded');
+        }
+        followers = [];
+    } else {
+        for (let i = 0; i < followers.length; i++) {
+            if (followers[i].idToFollow >= players.length) {
+                followers[i].idToFollow = util.randomInRange(0, players.length);
+            }
+        }
+    }
 }
 
 function moveloop() {
@@ -339,6 +362,10 @@ function gameloop() {
             leaderboard = "Il n'y a aucun joueur !";
             if (gameStart) {
                 gameStart = false;
+                for (let i = 0; i < followers.length; i++) {
+                    sockets[followers[i].id].emit('gameEnded');
+                }
+                followers = [];
             } else {
                 clearTimeout(timeoutStart);
             }
@@ -348,8 +375,12 @@ function gameloop() {
                 leaderboard = "Nous avons un gagnant !<br/>Bravo à " + players[0].name + " !";
                 setTimeout(function () {
                     console.log('[DEBUG] User win: ' + players[0].name);
-                    players.splice(util.findIndex(players, players[0].id), 1);
                     sockets[players[0].id].emit('WIN');
+                    players = [];
+                    for (let i = 0; i < followers.length; i++) {
+                        sockets[followers[i].id].emit('gameEnded');
+                    }
+                    followers = [];
                 }, 2500);
             } else {
                 leaderboard = "Il y a 1 joueur connecté";
@@ -443,7 +474,8 @@ function sendUpdates() {
                                 y: f.y,
                                 radius: f.radius,
                                 size: Math.round(f.size),
-                                hue: f.hue
+                                hue: f.hue,
+                                name: f.name
                             };
                         }
                     }
@@ -482,26 +514,15 @@ function sendUpdates() {
                             f.x - f.radius < u.x + u.screenWidth / 2 + 20 &&
                             f.y + f.radius > u.y - u.screenHeight / 2 - 20 &&
                             f.y - f.radius < u.y + u.screenHeight / 2 + 20) {
-                        if (f.id !== u.id) {
-                            return {
-                                id: f.id,
-                                x: f.x,
-                                y: f.y,
-                                radius: f.radius,
-                                size: Math.round(f.size),
-                                hue: f.hue,
-                                name: f.name
-                            };
-                        } else {
-                            //console.log("Nombre: " + f.name + " est un utilisateur");
-                            return {
-                                x: f.x,
-                                y: f.y,
-                                radius: f.radius,
-                                size: Math.round(f.size),
-                                hue: f.hue
-                            };
-                        }
+                        return {
+                            id: f.id,
+                            x: f.x,
+                            y: f.y,
+                            radius: f.radius,
+                            size: Math.round(f.size),
+                            hue: f.hue,
+                            name: f.name
+                        };
                     }
 
                 })
@@ -516,6 +537,7 @@ function sendUpdates() {
             });
         }
     });
+    checkFollowers();
     followers.forEach(function (follower) {
         var u = players[follower.idToFollow];
         var visibleFishs = fishs
@@ -553,20 +575,24 @@ function sendUpdates() {
                                 y: f.y,
                                 radius: f.radius,
                                 size: Math.round(f.size),
-                                hue: f.hue
+                                hue: f.hue,
+                                name: f.name
                             };
                         }
                     }
-
                 })
                 .filter(function (f) {
                     return f;
                 });
         sockets[follower.id].emit('serverTellPlayerMove', visiblePlayers, visibleFishs);
         if (leaderboardChanged) {
-            sockets[u.id].emit('leaderboard', {
+            var lb = leaderboard;
+            if (gameStart) {
+                lb = lb + "<br/><br/>Vous suivez le joueur " + u.name;
+            }
+            sockets[follower.id].emit('leaderboard', {
                 players: players.length,
-                leaderboard: leaderboard + "<br/><br/>Vous suivez le joueur " + u.name
+                leaderboard: lb
             });
         }
     });

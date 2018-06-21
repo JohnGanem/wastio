@@ -23,6 +23,7 @@ function startGame(type) {
 
     global.screenWidth = window.innerWidth;
     global.screenHeight = window.innerHeight;
+    global.followPlayer = false;
 
     document.getElementById('startMenuWrapper').style.maxHeight = '0px';
     document.getElementById('gameAreaWrapper').style.opacity = 1;
@@ -32,7 +33,7 @@ function startGame(type) {
     }
     if (!global.animLoopHandle)
         animloop();
-    socket.emit('respawn');
+    socket.emit('respawn', {type: type});
 //    window.chat.socket = socket;
 //    window.chat.registerFunctions();
     window.canvas.socket = socket;
@@ -55,7 +56,7 @@ window.onload = function () {
         btnS.style.display = "inline-block";
     }
     btnS.onclick = function () {
-        startGame('spectate');
+        startGame('spectator');
     };
 
     btn.onclick = function () {
@@ -203,6 +204,12 @@ function setupSocket(socket) {
     });
 
     socket.on('gameStarted', function (data) {
+        if (data.screen) {
+            global.willFollow = true;
+            window.setTimeout(function () {
+                global.willFollow = false;
+            }, 1000);
+        }
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
         global.playerBorder = data.playerBorder;
@@ -267,6 +274,7 @@ function setupSocket(socket) {
             player.radius = playerData.radius;
             player.xoffset = isNaN(xoffset) ? 0 : xoffset;
             player.yoffset = isNaN(yoffset) ? 0 : yoffset;
+            player.name = playerData.name;
         }
         players = userData;
         fishs = fishsList;
@@ -277,14 +285,9 @@ function setupSocket(socket) {
         global.gameStart = false;
         global.died = true;
         window.setTimeout(function () {
-            document.getElementById('gameAreaWrapper').style.opacity = 0;
-            document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
             global.died = false;
-            if (global.animLoopHandle) {
-                window.cancelAnimationFrame(global.animLoopHandle);
-                global.animLoopHandle = undefined;
-            }
-        }, 1500);
+            socket.emit('respawn', {type: "follower"});
+        }, 1000);
     });
 
     // Win
@@ -300,6 +303,19 @@ function setupSocket(socket) {
                 global.animLoopHandle = undefined;
             }
         }, 1500);
+    });
+
+    // End Followers
+    socket.on('gameEnded', function () {
+        global.gameStart = false;
+        window.setTimeout(function () {
+            document.getElementById('gameAreaWrapper').style.opacity = 0;
+            document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            if (global.animLoopHandle) {
+                window.cancelAnimationFrame(global.animLoopHandle);
+                global.animLoopHandle = undefined;
+            }
+        }, 2500);
     });
 
     socket.on('kick', function (data) {
@@ -537,8 +553,9 @@ function gameLoop() {
 
         graph.textAlign = 'center';
         graph.fillStyle = '#FFFFFF';
-        graph.font = 'bold 30px sans-serif';
+        graph.font = 'bold 16px sans-serif';
         graph.fillText('Vous avez perdu !', global.screenWidth / 2, global.screenHeight / 2);
+        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 40);
     } else if (global.win) {
         graph.fillStyle = '#333333';
         graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
@@ -547,6 +564,15 @@ function gameLoop() {
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 30px sans-serif';
         graph.fillText('Vous avez gagné !', global.screenWidth / 2, global.screenHeight / 2);
+    } else if (global.willFollow) {
+        graph.fillStyle = '#333333';
+        graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
+
+        graph.textAlign = 'center';
+        graph.fillStyle = '#FFFFFF';
+        graph.font = 'bold 16px sans-serif';
+        graph.fillText('La partie a déjà commencée', global.screenWidth / 2, global.screenHeight / 2);
+        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 40);
     } else if (!global.disconnected) {
         if (global.gameStart) {
             graph.drawImage(document.getElementById('bg'), 0, 0, (global.gameWidth), (global.gameHeight));
@@ -598,7 +624,7 @@ function resize() {
     player.screenWidth = c.width = global.screenWidth = global.playerType == 'player' ? window.innerWidth : global.gameWidth;
     player.screenHeight = c.height = global.screenHeight = global.playerType == 'player' ? window.innerHeight : global.gameHeight;
 
-    if (global.playerType == 'spectate') {
+    if (global.playerType == 'spectator') {
         player.x = global.gameWidth / 2;
         player.y = global.gameHeight / 2;
         document.getElementById('gameAreaWrapper').style.left = "calc((100% - " + global.gameWidth + "px) / 2)";

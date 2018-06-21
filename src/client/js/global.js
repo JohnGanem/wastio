@@ -27,6 +27,7 @@ module.exports = {
     followPlayer: false,
     kicked: false,
     startPingTime: 0,
+    willFollow: false,
     backgroundColor: '#f2fbff',
     lineColor: '#000000',
 };
