@@ -32,6 +32,7 @@ var V = SAT.Vector;
 var C = SAT.Circle;
 
 var gameStart = false;
+var gameWon = false;
 
 if (s.host !== "DEFAULT") {
     var pool = sql.createConnection({
@@ -111,18 +112,34 @@ function movePlayer(player) {
     if (!isNaN(deltaX)) {
         player.x += deltaX;
     }
-    var borderCalc = radius / 3 + c.playerBorder;
-    if (player.x > c.gameWidth - borderCalc) {
-        player.x = c.gameWidth - borderCalc;
-    }
-    if (player.y > c.gameHeight - borderCalc) {
-        player.y = c.gameHeight - borderCalc;
-    }
-    if (player.x < borderCalc) {
-        player.x = borderCalc;
-    }
-    if (player.y < borderCalc) {
-        player.y = borderCalc;
+
+    if (gameStart || gameWon) {
+        var borderCalc = radius / 3 + c.playerBorder;
+        if (player.x > c.gameWidth - borderCalc) {
+            player.x = c.gameWidth - borderCalc;
+        }
+        if (player.y > c.gameHeight - borderCalc) {
+            player.y = c.gameHeight - borderCalc;
+        }
+        if (player.x < borderCalc) {
+            player.x = borderCalc;
+        }
+        if (player.y < borderCalc) {
+            player.y = borderCalc;
+        }
+    } else {
+        if (player.x > ((c.gameWidth / 2) + c.initialBorder)) {
+            player.x = ((c.gameWidth / 2) + c.initialBorder);
+        }
+        if (player.y > ((c.gameHeight / 2) + c.initialBorder)) {
+            player.y = ((c.gameHeight / 2) + c.initialBorder);
+        }
+        if (player.x < ((c.gameWidth / 2) - c.initialBorder)) {
+            player.x = ((c.gameWidth / 2) - c.initialBorder);
+        }
+        if (player.y < ((c.gameHeight / 2) - c.initialBorder)) {
+            player.y = ((c.gameHeight / 2) - c.initialBorder);
+        }
     }
 }
 
@@ -142,7 +159,7 @@ function moveFish(fish) {
         fish.x += deltaX;
     }
 
-    var borderCalc = 50;
+    var borderCalc = 150;
     if (fish.x > c.gameWidth + borderCalc) {
         fishs.splice(util.findIndex(fishs, fish.id), 1);
     }
@@ -211,10 +228,11 @@ io.on('connection', function (socket) {
                     socket.emit('noPlayerToFollow');
                 } else {
                     currentPlayer.idToFollow = util.randomInRange(0, players.length);
-                    socket.emit('gameStarted', {
+                    socket.emit('gameAlreadyStarted', {
                         gameWidth: c.gameWidth,
                         gameHeight: c.gameHeight,
                         playerBorder: c.playerBorder,
+                        initialBorder: c.initialBorder,
                         idToFollow: currentPlayer.idToFollow,
                         screen: (type == "follower") ? false : true
                     });
@@ -226,7 +244,8 @@ io.on('connection', function (socket) {
                 socket.emit('gameSetup', {
                     gameWidth: c.gameWidth,
                     gameHeight: c.gameHeight,
-                    playerBorder: c.playerBorder
+                    playerBorder: c.playerBorder,
+                    initialBorder: c.initialBorder
                 });
                 if (type === 'player') {
                     players.push(currentPlayer);
@@ -241,6 +260,9 @@ io.on('connection', function (socket) {
     });
     socket.on('pingcheck', function () {
         socket.emit('pongcheck');
+    });
+    socket.on('restart', function() {
+        socket.emit('gameEnded');
     });
     socket.on('windowResized', function (data) {
         currentPlayer.screenWidth = data.screenWidth;
@@ -325,10 +347,15 @@ function tickPlayer(currentPlayer) {
             .reduce(function (a, b, c) {
                 return b ? a.concat(c) : a;
             }, []);
-    if (fishCollision > 0) {
+    if (fishCollision > 0 && c.invincibleMode === false && gameWon == false) {
         console.log('[DEBUG] Killing player: ' + currentPlayer.name);
         players.splice(util.findIndex(players, currentPlayer.id), 1);
         sockets[currentPlayer.id].emit('RIP');
+        if (players.length == 0) {
+            setTimeout(function () {
+                sockets[currentPlayer.id].emit('gameEnded');
+            }, 500);
+        }
         checkFollowers();
         fishs.splice(fishCollision, 1);
     }
@@ -355,10 +382,10 @@ function checkFollowers() {
 }
 
 function moveloop() {
+    for (var i = 0; i < players.length; i++) {
+        tickPlayer(players[i]);
+    }
     if (gameStart) {
-        for (var i = 0; i < players.length; i++) {
-            tickPlayer(players[i]);
-        }
         for (i = 0; i < fishs.length; i++) {
             if (fishs[i].speed > 0)
                 moveFish(fishs[i]);
@@ -375,19 +402,22 @@ function gameloop() {
         if (nbPlayers == 0) {
             if (gameStart) {
                 leaderboard = "Égalité !";
-                gameStart = false;
-                for (let i = 0; i < followers.length; i++) {
-                    sockets[followers[i].id].emit('gameEnded');
-                }
-                followers = [];
+                setTimeout(function () {
+                    for (let i = 0; i < followers.length; i++) {
+                        sockets[followers[i].id].emit('gameEnded');
+                    }
+                    followers = [];
+                    fishs = [];
+                    gameStart = false;
+                }, 2500);
             } else {
                 leaderboard = "Il n'y a aucun joueur !";
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 1) {
             if (gameStart) {
-                gameStart = false;
                 leaderboard = "Nous avons un gagnant !<br/>Bravo à " + players[0].name + " !";
+                gameWon = true;
                 setTimeout(function () {
                     console.log('[DEBUG] User win: ' + players[0].name);
                     sockets[players[0].id].emit('WIN');
@@ -396,9 +426,12 @@ function gameloop() {
                         sockets[followers[i].id].emit('gameEnded');
                     }
                     followers = [];
+                    fishs = [];
+                    gameWon = false;
+                    gameStart = false;
                 }, 2500);
             } else {
-                leaderboard = "Il y a 1 joueur connecté";
+                leaderboard = "Il y a 1 joueur connecté<br/>En attente de plus de joueurs";
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 2 && gameStart == false) {
@@ -407,26 +440,44 @@ function gameloop() {
                 gameStart = true;
                 leaderboard = "Il reste " + nbPlayers + " joueurs";
                 leaderboardChanged = true;
+                for (let i in sockets) {
+                    sockets[i].emit('gameStarted');
+                }
                 clearTimeout(timeoutStart);
-            }, 30000);
+            }, (c.startTimer * 1000));
             leaderboard = "Il y a 2 joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
-            if (nbPlayers == 100 && gameStart == false) {
-                clearTimeout(timeoutStart);
-            }
             if (gameStart) {
                 leaderboard = "Il reste " + nbPlayers + " joueurs";
             } else {
-                leaderboard = "Il y a " + nbPlayers + " joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+                if (nbPlayers == 100) {
+                    gameStart = true;
+                    leaderboard = "Il reste " + nbPlayers + " joueurs";
+                    leaderboardChanged = true;
+                    for (let i in sockets) {
+                        sockets[i].emit('gameStarted');
+                    }
+                    clearTimeout(timeoutStart);
+                } else {
+                    if (timeoutStart._idleTimeout == -1) {
+                        timeoutStart = setTimeout(function () {
+                            gameStart = true;
+                            leaderboard = "Il reste " + nbPlayers + " joueurs";
+                            leaderboardChanged = true;
+                            for (let i in sockets) {
+                                sockets[i].emit('gameStarted');
+                            }
+                            clearTimeout(timeoutStart);
+                        }, (c.startTimer * 1000));
+                    }
+                    leaderboard = "Il y a " + nbPlayers + " joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
+                }
             }
         }
     } else {
         if (gameStart) {
             balanceFishs();
         } else {
-            if (typeof fishs !== 'undefined' && fishs.length > 0) {
-                fishs = [];
-            }
             if (nbPlayers >= 2) {
                 leaderboardChanged = true;
                 leaderboard = "Il y a " + nbPlayers + " joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";

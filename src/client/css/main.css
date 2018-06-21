@@ -21,26 +21,6 @@ div {
     -ms-user-select: none; /* IE10+ */
 }
 
-#split {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    width: 100px;
-    height: 100px;
-    padding: 5px;
-    border: none;
-}
-
-#feed {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 100px;
-    height: 100px;
-    padding: 5px;
-    border: none;
-}
-
 #status {
     position: absolute;
     padding: 10px;
@@ -48,7 +28,7 @@ div {
     color: #FFF;
     font-size: 16.1px;
     top: 10px;
-    right: 10px;
+    right: calc(50% - 295px / 2);
     font-weight: bold;
     text-align: center;
 }
@@ -62,57 +42,17 @@ div {
     font-size: 16.1px;
 }
 
-.chatbox {
+#restart {
+    color: #FF8888;
     position: absolute;
-    width: 300px;
-    height: 320px;
-    background: rgba(255, 255, 255, 0.7);
-    bottom: 5px;
-    left: 5px;
-    border-radius: 5px;
-    pointer-events: none;
-}
-
-.chatbox .chat-list {
-    padding: 5px;
-    margin: 0;
-    list-style: none;
-    box-sizing: border-box;
-    height: 285px;
-    overflow: hidden;
-}
-
-.chatbox .chat-list li {
-    padding: 2px;
-    margin: 3px;
-}
-
-.chatbox .chat-list li.me b {
-    color: #ea6153;
-}
-
-.chatbox .chat-list li.friend b {
-    color: #2ecc71;
-}
-
-.chatbox .chat-list li.system {
-    color: #9b59b6;
-    font-style: italic;
-}
-
-.chatbox .chat-list li.system:before {
-    content: "» ";
-}
-
-.chatbox .chat-input {
-    pointer-events: all;
-    box-sizing: border-box;
-    width: 100%;
-    padding: 8px;
-    background: transparent;
-    border: none;
-    border-top: 1px solid #DDD;
-    outline: none;
+    bottom: 10px;
+    right: 10px;
+    font-size: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    height: 22px;
+    width: 20px;
+    display: none;
+    text-align: center;
 }
 
 #startMenu {
@@ -227,11 +167,6 @@ div {
 }
 
 #settings, #startMenuWrapper {
-    -webkit-transition: max-height 1s;
-    -moz-transition: max-height 1s;
-    -ms-transition: max-height 1s;
-    -o-transition: max-height 1s;
-    transition: max-height 1s;
     overflow: hidden;
 }
 

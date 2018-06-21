@@ -13,10 +13,13 @@
             "to": 50
         }
     },
+    "invincibleMode": false,
     "gameWidth": 2000,
     "gameHeight": 2000,
     "playerBorder": 250,
+    "initialBorder": 100,
     "adminPass": "DEFAULT",
+    "startTimer": 10,
     "maxFishs": 60,
     "angleProjection": 2,
     "startSpace": 50,

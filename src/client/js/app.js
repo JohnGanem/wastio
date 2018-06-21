@@ -4,6 +4,7 @@ var Canvas = require('./canvas');
 var global = require('./global');
 
 var playerNameInput = document.getElementById('playerNameInput');
+var restart = document.getElementById('restart');
 var socket;
 var reason;
 
@@ -37,6 +38,7 @@ function startGame(type) {
     if (!global.animLoopHandle)
         animloop();
     socket.emit('respawn', {type: type});
+
     window.canvas.socket = socket;
     global.socket = socket;
 }
@@ -70,6 +72,11 @@ window.onload = function () {
             nickErrorText.style.opacity = 1;
         }
     };
+
+    restart.onclick = function () {
+        socket.emit('restart');
+    };
+
     var settingsMenu = document.getElementById('settingsButton');
     var settings = document.getElementById('settings');
     var instructions = document.getElementById('instructions');
@@ -173,11 +180,15 @@ function setupSocket(socket) {
         player.target = window.canvas.target;
         global.player = player;
         socket.emit('gotit', player);
-        global.gameStart = true;
+        global.enteredGame = true;
         c.focus();
     });
 
-    socket.on('gameStarted', function (data) {
+    socket.on('gameStarted', function () {
+        global.gameStart = true;
+    });
+
+    socket.on('gameAlreadyStarted', function (data) {
         if (data.screen) {
             global.willFollow = true;
             window.setTimeout(function () {
@@ -187,16 +198,20 @@ function setupSocket(socket) {
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
         global.playerBorder = data.playerBorder;
+        global.initialBorder = data.initialBorder;
         global.followPlayer = data.idToFollow;
+        global.playerType = "follower";
         resize();
     });
 
     socket.on('noPlayerToFollow', function (data) {
         global.noPlayerToFollow = true;
+        global.enteredGame = false;
         global.gameStart = false;
         window.setTimeout(function () {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            restart.style.display = "none";
             global.noPlayerToFollow = false;
             if (global.animLoopHandle) {
                 window.cancelAnimationFrame(global.animLoopHandle);
@@ -209,6 +224,7 @@ function setupSocket(socket) {
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
         global.playerBorder = data.playerBorder;
+        global.initialBorder = data.initialBorder;
         resize();
     });
 
@@ -247,20 +263,23 @@ function setupSocket(socket) {
     });
     // Death.
     socket.on('RIP', function () {
+        global.enteredGame = false;
         global.gameStart = false;
         global.died = true;
         window.setTimeout(function () {
             global.died = false;
             socket.emit('respawn', {type: "follower"});
-        }, 1000);
+        }, 1500);
     });
     // Win
     socket.on('WIN', function () {
+        global.enteredGame = false;
         global.gameStart = false;
         global.win = true;
         window.setTimeout(function () {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            restart.style.display = "none";
             global.win = false;
             if (global.animLoopHandle) {
                 window.cancelAnimationFrame(global.animLoopHandle);
@@ -270,10 +289,12 @@ function setupSocket(socket) {
     });
     // End Followers
     socket.on('gameEnded', function () {
+        global.enteredGame = false;
         global.gameStart = false;
         window.setTimeout(function () {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            restart.style.display = "none";
             if (global.animLoopHandle) {
                 window.cancelAnimationFrame(global.animLoopHandle);
                 global.animLoopHandle = undefined;
@@ -281,6 +302,7 @@ function setupSocket(socket) {
         }, 2500);
     });
     socket.on('kick', function (data) {
+        global.enteredGame = false;
         global.gameStart = false;
         reason = data;
         global.kicked = true;
@@ -435,7 +457,6 @@ function drawgrid() {
 
 function drawborder() {
     graph.lineWidth = 1;
-    graph.strokeStyle = playerConfig.borderColor;
     var gameWidth = global.gameWidth - global.playerBorder;
     var gameHeight = global.gameHeight - global.playerBorder;
     var screenWidth = (global.screenWidth / 2 + global.playerBorder);
@@ -481,6 +502,57 @@ function drawborder() {
         graph.lineTo(screenWidth - player.x,
                 gameHeight + global.screenHeight / 2 - player.y);
         graph.strokeStyle = global.lineColor;
+        graph.stroke();
+    }
+}
+
+function drawInitial() {
+    graph.lineWidth = 3;
+    var gameWidth = global.gameWidth / 2 + global.initialBorder;
+    var gameHeight = global.gameHeight / 2 + global.initialBorder;
+    var screenWidth = (global.screenWidth / 2 + ((global.gameWidth / 2) - global.initialBorder));
+    var screenHeight = (global.screenHeight / 2 + ((global.gameHeight / 2) - global.initialBorder));
+    // Left-vertical.
+    if (player.x <= screenWidth) {
+        graph.beginPath();
+        graph.moveTo(screenWidth - player.x,
+                0 ? player.y > global.screenHeight / 2 : screenHeight - player.y);
+        graph.lineTo(screenWidth - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
+        graph.strokeStyle = global.initialBorderColor;
+        graph.stroke();
+    }
+
+// Top-horizontal.
+    if (player.y <= screenHeight) {
+        graph.beginPath();
+        graph.moveTo(0 ? player.x > global.screenWidth / 2 : screenWidth - player.x,
+                screenHeight - player.y);
+        graph.lineTo(gameWidth + global.screenWidth / 2 - player.x,
+                screenHeight - player.y);
+        graph.strokeStyle = global.initialBorderColor;
+        graph.stroke();
+    }
+
+// Right-vertical.
+    if (gameWidth - player.x <= global.screenWidth / 2) {
+        graph.beginPath();
+        graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
+                screenHeight - player.y);
+        graph.lineTo(gameWidth + global.screenWidth / 2 - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
+        graph.strokeStyle = global.initialBorderColor;
+        graph.stroke();
+    }
+
+// Bottom-horizontal.
+    if (gameHeight - player.y <= global.screenHeight / 2) {
+        graph.beginPath();
+        graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
+        graph.lineTo(screenWidth - player.x,
+                gameHeight + global.screenHeight / 2 - player.y);
+        graph.strokeStyle = global.initialBorderColor;
         graph.stroke();
     }
 }
@@ -538,14 +610,17 @@ function gameLoop() {
         graph.fillText("Il n'y a aucun joueur", global.screenWidth / 2, global.screenHeight / 2);
         graph.fillText('à observer', global.screenWidth / 2, global.screenHeight / 2 + 30);
     } else if (!global.disconnected) {
-        if (global.gameStart) {
+        if (global.enteredGame) {
             graph.drawImage(document.getElementById('bg'), (player.x - global.screenWidth / 2), (player.y - global.screenHeight / 2), (global.gameWidth + 1000), (global.gameHeight + 1000), -500, -500, (global.gameWidth + 1000), (global.gameHeight + 1000));
             if (global.gridDraw) {
                 drawgrid();
             }
             fishs.forEach(drawFish);
-            if (global.borderDraw && global.playerType != 'spectator') {
+            if (global.borderDraw) {
                 drawborder();
+                if (global.gameStart === false) {
+                    drawInitial();
+                }
             }
             drawPlayers();
             socket.emit('0', window.canvas.target); // playerSendTarget "Heartbeat".
@@ -588,6 +663,10 @@ function resize() {
         player.y = global.gameHeight / 2;
         document.getElementById('gameAreaWrapper').style.left = "calc((100% - " + global.gameWidth + "px) / 2)";
     }
-
+    if (global.playerType == "spectator" || global.playerType == "follower") {
+        restart.style.display = "block";
+    } else {
+        restart.style.display = "none";
+    }
     socket.emit('windowResized', {screenWidth: global.screenWidth, screenHeight: global.screenHeight, followPlayer: global.followPlayer});
 }

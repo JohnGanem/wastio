@@ -21,6 +21,7 @@ module.exports = {
     playerBorder: 0,
     xoffset: -0,
     yoffset: -0,
+    enteredGame: false,
     gameStart: false,
     disconnected: false,
     died: false,
@@ -32,4 +33,5 @@ module.exports = {
     willFollow: false,
     backgroundColor: '#f2fbff',
     lineColor: '#000000',
+    initialBorderColor: '#DD0000'
 };
