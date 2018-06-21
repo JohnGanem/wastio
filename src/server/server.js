@@ -62,7 +62,7 @@ function addFishs(toAdd) {
         var startLocation = util.randomInRange(0, 4);
         var position = util.randomBorder(startLocation, radius);
         var target = util.randomTargetBorder(startLocation, radius);
-        var speed = util.randomInRange(c.fishs.defaultSpeed.from, c.fishs.defaultSpeed.to) / 10;
+        var speed = util.randomInRange(c.fishs.defaultSpeed.from * 10, c.fishs.defaultSpeed.to * 10) / 10;
         var img = chooseFishImage(size);
         fishs.push({
             id: ((new Date()).getTime() + '' + fishs.length) >>> 0,
@@ -362,7 +362,7 @@ function tickPlayer(currentPlayer) {
     }
 
     if (typeof (currentPlayer.speed) == "undefined") {
-        currentPlayer.speed = 4;
+        currentPlayer.speed = c.playerSpeed;
     }
     playerCircle.r = currentPlayer.radius;
 }
@@ -680,7 +680,7 @@ function sendUpdates() {
     leaderboardChanged = false;
 }
 
-setInterval(moveloop, 1000 / 60);
+setInterval(moveloop, 1000 / c.FPS);
 setInterval(gameloop, 1000);
 setInterval(sendUpdates, 1000 / c.networkUpdateFactor);
 

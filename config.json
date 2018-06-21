@@ -9,10 +9,11 @@
             "to": 150
         },
         "defaultSpeed": {
-            "from": 3,
-            "to": 50
+            "from": 0.6,
+            "to": 10
         }
     },
+    "playerSpeed": 8,
     "invincibleMode": false,
     "gameWidth": 2000,
     "gameHeight": 2000,
@@ -25,6 +26,7 @@
     "startSpace": 50,
     "networkUpdateFactor": 40,
     "maxHeartbeatInterval": 30000,
+    "FPS": 30,
     "sqlinfo": {
         "connectionLimit": 100,
         "host": "DEFAULT",
