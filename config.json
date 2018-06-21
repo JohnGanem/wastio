@@ -21,11 +21,9 @@
     "adminPass": "DEFAULT",
     "maxFishs": 60,
     "angleProjection": 2,
-    "slowBase": 4.5,
-    "logChat": 0,
+    "startSpace": 50,
     "networkUpdateFactor": 40,
     "maxHeartbeatInterval": 30000,
-    "sizeLossRate": 1,
     "sqlinfo": {
         "connectionLimit": 100,
         "host": "DEFAULT",

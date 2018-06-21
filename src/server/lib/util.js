@@ -48,6 +48,14 @@ exports.centerPosition = function () {
     };
 };
 
+// generate a random position near center
+exports.randomCenterPosition = function () {
+    return {
+        x: exports.randomInRange((cfg.gameWidth / 2) - cfg.startSpace, (cfg.gameWidth / 2) + cfg.startSpace),
+        y: exports.randomInRange((cfg.gameHeight / 2) - cfg.startSpace, (cfg.gameHeight / 2) + cfg.startSpace)
+    };
+};
+
 // generate a random position at the border
 
 exports.randomBorder = function (start, radius) {

@@ -80,22 +80,14 @@ function addFishs(toAdd) {
 function movePlayer(player) {
     var target = player.target;
     var speed = player.speed;
-    var size = player.size;
     var radius = player.radius;
 
     var dist = Math.sqrt(Math.pow(target.y, 2) + Math.pow(target.x, 2));
     var deg = Math.atan2(target.y, target.x);
-    var slowDown = 1;
-    if (speed <= 6.25) {
-        slowDown = util.log(size, c.slowBase) - initSizeLog + 1;
-    }
 
-    var deltaY = speed * Math.sin(deg) / slowDown;
-    var deltaX = speed * Math.cos(deg) / slowDown;
+    var deltaX = speed * Math.cos(deg);
+    var deltaY = speed * Math.sin(deg);
 
-    if (speed > 4.5) {
-        player.speed -= 0.5;
-    }
     if (dist < (50 + radius)) {
         deltaY *= dist / (50 + radius);
         deltaX *= dist / (50 + radius);
@@ -180,7 +172,7 @@ io.on('connection', function (socket) {
             console.log('[INFO] Player ' + player.name + ' connected!');
             sockets[player.id] = socket;
             var radius = util.sizeToRadius(c.defaultPlayerSize);
-            var position = util.centerPosition(radius);
+            var position = util.randomCenterPosition(radius);
             player.x = position.x;
             player.y = position.y;
             player.target.x = 0;
@@ -197,17 +189,21 @@ io.on('connection', function (socket) {
             currentPlayer.lastHeartbeat = new Date().getTime();
 //            io.emit('playerJoin', {name: currentPlayer.name});
             if ((gameStart && type == "player") || type == "follower") {
-                currentPlayer.idToFollow = util.randomInRange(0, players.length);
-                socket.emit('gameStarted', {
-                    gameWidth: c.gameWidth,
-                    gameHeight: c.gameHeight,
-                    playerBorder: c.playerBorder,
-                    idToFollow: currentPlayer.idToFollow,
-                    screen: (type == "follower") ? false : true
-                });
+                if (players.length == 0) {
+                    socket.emit('noPlayerToFollow');
+                } else {
+                    currentPlayer.idToFollow = util.randomInRange(0, players.length);
+                    socket.emit('gameStarted', {
+                        gameWidth: c.gameWidth,
+                        gameHeight: c.gameHeight,
+                        playerBorder: c.playerBorder,
+                        idToFollow: currentPlayer.idToFollow,
+                        screen: (type == "follower") ? false : true
+                    });
+                    followers.push(currentPlayer);
+                    leaderboardChanged = true;
+                }
                 type = "follower";
-                followers.push(currentPlayer);
-                leaderboardChanged = true;
             } else {
                 socket.emit('gameSetup', {
                     gameWidth: c.gameWidth,
@@ -248,7 +244,7 @@ io.on('connection', function (socket) {
             followers.splice(util.findIndex(followers, currentPlayer.id), 1);
         }
         type = data.type;
-        var position = util.centerPosition(radius);
+        var position = util.centerPosition();
         var size = 0;
         var radius = 0;
 
@@ -359,14 +355,15 @@ function gameloop() {
         nbPlayers = nbPlayersNow;
         leaderboardChanged = true;
         if (nbPlayers == 0) {
-            leaderboard = "Il n'y a aucun joueur !";
             if (gameStart) {
+                leaderboard = "Égalité !";
                 gameStart = false;
                 for (let i = 0; i < followers.length; i++) {
                     sockets[followers[i].id].emit('gameEnded');
                 }
                 followers = [];
             } else {
+                leaderboard = "Il n'y a aucun joueur !";
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 1) {
@@ -387,10 +384,12 @@ function gameloop() {
                 clearTimeout(timeoutStart);
             }
         } else if (nbPlayers == 2 && gameStart == false) {
+            clearTimeout(timeoutStart);
             timeoutStart = setTimeout(function () {
                 gameStart = true;
                 leaderboard = "Il reste " + nbPlayers + " joueurs";
                 leaderboardChanged = true;
+                clearTimeout(timeoutStart);
             }, 10000);
             leaderboard = "Il y a 2 joueurs connectés<br/>Il reste " + printTimeLeft(timeoutStart) + " avant le début.";
         } else {
@@ -524,7 +523,6 @@ function sendUpdates() {
                             name: f.name
                         };
                     }
-
                 })
                 .filter(function (f) {
                     return f;
@@ -587,7 +585,7 @@ function sendUpdates() {
         sockets[follower.id].emit('serverTellPlayerMove', visiblePlayers, visibleFishs);
         if (leaderboardChanged) {
             var lb = leaderboard;
-            if (gameStart) {
+            if (players.length > 1) {
                 lb = lb + "<br/><br/>Vous suivez le joueur " + u.name;
             }
             sockets[follower.id].emit('leaderboard', {

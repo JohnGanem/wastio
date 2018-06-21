@@ -185,9 +185,6 @@ div {
     margin-bottom: 10px;
 
 }
-#spectateButton {
-    display: none;
-}
 
 #spectateButton:active, #spectateButton:hover,
 #startButton:active, #startButton:hover {

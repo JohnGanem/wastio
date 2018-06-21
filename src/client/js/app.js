@@ -19,6 +19,9 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) {
 
 function startGame(type) {
     global.playerName = playerNameInput.value.replace(/(<([^>]+)>)/ig, '').substring(0, 25);
+    if (global.playerName === '') {
+        global.playerName = randomName();
+    }
     global.playerType = type;
 
     global.screenWidth = window.innerWidth;
@@ -34,8 +37,6 @@ function startGame(type) {
     if (!global.animLoopHandle)
         animloop();
     socket.emit('respawn', {type: type});
-//    window.chat.socket = socket;
-//    window.chat.registerFunctions();
     window.canvas.socket = socket;
     global.socket = socket;
 }
@@ -52,11 +53,12 @@ window.onload = function () {
             btnS = document.getElementById('spectateButton'),
             nickErrorText = document.querySelector('#startMenu .input-error');
 
-    if (!global.mobile) {
-        btnS.style.display = "inline-block";
-    }
     btnS.onclick = function () {
-        startGame('spectator');
+        if (global.mobile) {
+            startGame('follower');
+        } else {
+            startGame('spectator');
+        }
     };
 
     btn.onclick = function () {
@@ -68,11 +70,9 @@ window.onload = function () {
             nickErrorText.style.opacity = 1;
         }
     };
-
     var settingsMenu = document.getElementById('settingsButton');
     var settings = document.getElementById('settings');
     var instructions = document.getElementById('instructions');
-
     settingsMenu.onclick = function () {
         if (settings.style.maxHeight == '300px') {
             settings.style.maxHeight = '0px';
@@ -80,10 +80,8 @@ window.onload = function () {
             settings.style.maxHeight = '300px';
         }
     };
-
     playerNameInput.addEventListener('keypress', function (e) {
         var key = e.which || e.keyCode;
-
         if (key === global.KEY_ENTER) {
             if (validNick()) {
                 nickErrorText.style.opacity = 0;
@@ -94,13 +92,11 @@ window.onload = function () {
         }
     });
 };
-
 // TODO: Break out into GameControls.
 
 var foodConfig = {
     border: 0
 };
-
 var playerConfig = {
     border: 6,
     textColor: '#FFFFFF',
@@ -108,7 +104,6 @@ var playerConfig = {
     textBorderSize: 3,
     defaultSize: 30
 };
-
 var player = {
     id: -1,
     x: global.screenWidth / 2,
@@ -118,16 +113,12 @@ var player = {
     target: {x: global.screenWidth / 2, y: global.screenHeight / 2}
 };
 global.player = player;
-
 var leaderboard;
 var players = [];
 var fishs = [];
-
-var target = {x: player.x, y: player.y};
+var target = {x: 0, y: 0};
 global.target = target;
-
 window.canvas = new Canvas();
-//window.chat = new ChatClient();
 
 var visibleBorderSetting = document.getElementById('visBord');
 visibleBorderSetting.onchange = function () {
@@ -137,31 +128,20 @@ visibleBorderSetting.onchange = function () {
         global.borderDraw = false;
     }
 };
-//var showSizeSetting = document.getElementById('showSize');
-//showSizeSetting.onchange = settings.toggleSize;
-
-//var continuitySetting = document.getElementById('continuity');
-//continuitySetting.onchange = settings.toggleContinuity;
-
-//var roundFoodSetting = document.getElementById('roundFood');
-//roundFoodSetting.onchange = settings.toggleRoundFood;
-
+var visibleGridSetting = document.getElementById('visGrid');
+visibleGridSetting.onchange = function () {
+    if (!global.gridDraw) {
+        global.gridDraw = true;
+    } else {
+        global.gridDraw = false;
+    }
+};
 var c = window.canvas.cv;
 var graph = c.getContext('2d');
 graph.mozImageSmoothingEnabled = false;
 graph.webkitImageSmoothingEnabled = false;
 graph.msImageSmoothingEnabled = false;
 graph.imageSmoothingEnabled = false;
-
-//$( "#feed" ).click(function() {
-//    socket.emit('1');
-//    window.canvas.reenviar = false;
-//});
-//
-//$( "#split" ).click(function() {
-//    socket.emit('2');
-//    window.canvas.reenviar = false;
-//});
 
 // socket stuff.
 function setupSocket(socket) {
@@ -171,18 +151,15 @@ function setupSocket(socket) {
         debug('Latency: ' + latency + 'ms');
 //        window.chat.addSystemLine('Ping: ' + latency + 'ms');
     });
-
     // Handle error.
     socket.on('connect_failed', function () {
         socket.close();
         global.disconnected = true;
     });
-
     socket.on('disconnect', function () {
         socket.close();
         global.disconnected = true;
     });
-
     // Handle connection.
     socket.on('welcome', function (playerSettings) {
         player = playerSettings;
@@ -191,15 +168,8 @@ function setupSocket(socket) {
         player.screenHeight = global.screenHeight;
         player.target = window.canvas.target;
         global.player = player;
-//        window.chat.player = player;
         socket.emit('gotit', player);
         global.gameStart = true;
-//        debug('Game started at: ' + global.gameStart);
-//        window.chat.addSystemLine('Connected to the game!');
-//        window.chat.addSystemLine('Type <b>-help</b> for a list of commands.');
-//        if (global.mobile) {
-//            document.getElementById('gameAreaWrapper').removeChild(document.getElementById('chatbox'));
-//        }
         c.focus();
     });
 
@@ -217,24 +187,26 @@ function setupSocket(socket) {
         resize();
     });
 
+    socket.on('noPlayerToFollow', function (data) {
+        global.noPlayerToFollow = true;
+        global.gameStart = false;
+        window.setTimeout(function () {
+            document.getElementById('gameAreaWrapper').style.opacity = 0;
+            document.getElementById('startMenuWrapper').style.maxHeight = '1000px';
+            global.noPlayerToFollow = false;
+            if (global.animLoopHandle) {
+                window.cancelAnimationFrame(global.animLoopHandle);
+                global.animLoopHandle = undefined;
+            }
+        }, 1000);
+    });
+
     socket.on('gameSetup', function (data) {
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
         global.playerBorder = data.playerBorder;
         resize();
     });
-
-//    socket.on('playerDied', function (data) {
-//        window.chat.addSystemLine('{GAME} - <b>' + (data.name.length < 1 ? 'An unnamed cell' : data.name) + '</b> was eaten.');
-//    });
-
-//    socket.on('playerDisconnect', function (data) {
-//        window.chat.addSystemLine('{GAME} - <b>' + (data.name.length < 1 ? 'An unnamed cell' : data.name) + '</b> disconnected.');
-//    });
-
-//    socket.on('playerJoin', function (data) {
-//        window.chat.addSystemLine('{GAME} - <b>' + (data.name.length < 1 ? 'An unnamed cell' : data.name) + '</b> joined.');
-//    });
 
     socket.on('leaderboard', function (data) {
         leaderboard = data.leaderboard;
@@ -244,15 +216,6 @@ function setupSocket(socket) {
         //status += '<br />Players: ' + data.players;
         document.getElementById('status').innerHTML = status;
     });
-
-//    socket.on('serverMSG', function (data) {
-//        window.chat.addSystemLine(data);
-//    });
-
-//    // Chat.
-//    socket.on('serverSendPlayerChat', function (data) {
-//        window.chat.addChatLine(data.sender, data.message, false);
-//    });
 
     // Handle movement.
     socket.on('serverTellPlayerMove', function (userData, fishsList) {
@@ -266,7 +229,6 @@ function setupSocket(socket) {
         if (global.playerType != 'spectator') {
             var xoffset = player.x - playerData.x;
             var yoffset = player.y - playerData.y;
-
             player.x = playerData.x;
             player.y = playerData.y;
             player.hue = playerData.hue;
@@ -279,7 +241,6 @@ function setupSocket(socket) {
         players = userData;
         fishs = fishsList;
     });
-
     // Death.
     socket.on('RIP', function () {
         global.gameStart = false;
@@ -289,7 +250,6 @@ function setupSocket(socket) {
             socket.emit('respawn', {type: "follower"});
         }, 1000);
     });
-
     // Win
     socket.on('WIN', function () {
         global.gameStart = false;
@@ -304,7 +264,6 @@ function setupSocket(socket) {
             }
         }, 1500);
     });
-
     // End Followers
     socket.on('gameEnded', function () {
         global.gameStart = false;
@@ -317,27 +276,19 @@ function setupSocket(socket) {
             }
         }, 2500);
     });
-
     socket.on('kick', function (data) {
         global.gameStart = false;
         reason = data;
         global.kicked = true;
         socket.close();
     });
-
-//    socket.on('virusSplit', function (virusCell) {
-//        socket.emit('2', virusCell);
-//        reenviar = false;
-//    });
 }
 
 function drawCircle(centerX, centerY, radius, sides) {
     var theta = 0;
     var x = 0;
     var y = 0;
-
     graph.beginPath();
-
     for (var i = 0; i < sides; i++) {
         theta = (i / sides) * 2 * Math.PI;
         x = centerX + radius * Math.sin(theta);
@@ -364,32 +315,24 @@ function drawPlayers() {
         x: player.x - (global.screenWidth / 2),
         y: player.y - (global.screenHeight / 2)
     };
-
     for (var z = 0; z < players.length; z++) {
         var userCurrent = players[z];
-
         var x = 0;
         var y = 0;
-
         var points = 30 + ~~(userCurrent.size / 5);
         var increase = Math.PI * 2 / points;
-
         graph.strokeStyle = 'hsl(' + userCurrent.hue + ', 100%, 45%)';
         graph.fillStyle = 'hsl(' + userCurrent.hue + ', 100%, 50%)';
         graph.lineWidth = playerConfig.border;
-
         var xstore = [];
         var ystore = [];
-
         global.spin += 0.0;
-
         var circle = {
             x: userCurrent.x - start.x,
             y: userCurrent.y - start.y
         };
 
         for (var i = 0; i < points; i++) {
-
             x = userCurrent.radius * Math.cos(global.spin) + circle.x;
             y = userCurrent.radius * Math.sin(global.spin) + circle.y;
             if (typeof (userCurrent.id) == "undefined") {
@@ -432,7 +375,6 @@ function drawPlayers() {
             nameCell = player.name;
         else
             nameCell = userCurrent.name;
-
         var fontSize = Math.max(userCurrent.radius / 3, 12);
         graph.lineWidth = playerConfig.textBorderSize;
         graph.fillStyle = playerConfig.textColor;
@@ -442,10 +384,8 @@ function drawPlayers() {
         graph.textAlign = 'center';
         graph.textBaseline = 'middle';
         graph.font = 'bold ' + fontSize + 'px sans-serif';
-
         graph.strokeText(nameCell, circle.x, circle.y);
         graph.fillText(nameCell, circle.x, circle.y);
-
     }
 }
 
@@ -453,12 +393,20 @@ function valueInRange(min, max, value) {
     return Math.min(max, Math.max(min, value));
 }
 
+function randomName() {
+    function randomIn(array) {
+        return array[Math.floor(Math.random() * -array.length) + array.length];
+    }
+    var animal = ["Ornithorynque", "Alpaga", "Zebre", "Tatou", "Chat", "Phasme", "Kangourou"];
+    var adj = ["fatigue", "douteux", "enterre", "apeure", "decu", "agressif", "joyeux"];
+    return randomIn(animal) + "_" + randomIn(adj);
+}
+
 function drawgrid() {
     graph.lineWidth = 1;
     graph.strokeStyle = global.lineColor;
     graph.globalAlpha = 0.15;
     graph.beginPath();
-
     for (var x = global.xoffset - player.x; x < global.screenWidth; x += global.screenHeight / 18) {
         graph.moveTo(x, 0);
         graph.lineTo(x, global.screenHeight);
@@ -480,7 +428,6 @@ function drawborder() {
     var gameHeight = global.gameHeight - global.playerBorder;
     var screenWidth = (global.screenWidth / 2 + global.playerBorder);
     var screenHeight = (global.screenHeight / 2 + global.playerBorder);
-
     // Left-vertical.
     if (player.x <= screenWidth) {
         graph.beginPath();
@@ -492,7 +439,7 @@ function drawborder() {
         graph.stroke();
     }
 
-    // Top-horizontal.
+// Top-horizontal.
     if (player.y <= screenHeight) {
         graph.beginPath();
         graph.moveTo(0 ? player.x > global.screenWidth / 2 : screenWidth - player.x,
@@ -503,7 +450,7 @@ function drawborder() {
         graph.stroke();
     }
 
-    // Right-vertical.
+// Right-vertical.
     if (gameWidth - player.x <= global.screenWidth / 2) {
         graph.beginPath();
         graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
@@ -514,7 +461,7 @@ function drawborder() {
         graph.stroke();
     }
 
-    // Bottom-horizontal.
+// Bottom-horizontal.
     if (gameHeight - player.y <= global.screenHeight / 2) {
         graph.beginPath();
         graph.moveTo(gameWidth + global.screenWidth / 2 - player.x,
@@ -550,16 +497,14 @@ function gameLoop() {
     if (global.died) {
         graph.fillStyle = '#333333';
         graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
         graph.textAlign = 'center';
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 16px sans-serif';
         graph.fillText('Vous avez perdu !', global.screenWidth / 2, global.screenHeight / 2);
-        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 40);
+        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 30);
     } else if (global.win) {
         graph.fillStyle = '#333333';
         graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
         graph.textAlign = 'center';
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 30px sans-serif';
@@ -567,20 +512,27 @@ function gameLoop() {
     } else if (global.willFollow) {
         graph.fillStyle = '#333333';
         graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
         graph.textAlign = 'center';
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 16px sans-serif';
         graph.fillText('La partie a déjà commencée', global.screenWidth / 2, global.screenHeight / 2);
-        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 40);
+        graph.fillText('Vous allez suivre un autre joueur', global.screenWidth / 2, global.screenHeight / 2 + 30);
+    } else if (global.noPlayerToFollow) {
+        graph.fillStyle = '#333333';
+        graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
+        graph.textAlign = 'center';
+        graph.fillStyle = '#FFFFFF';
+        graph.font = 'bold 22px sans-serif';
+        graph.fillText("Il n'y a aucun joueur", global.screenWidth / 2, global.screenHeight / 2);
+        graph.fillText('à observer', global.screenWidth / 2, global.screenHeight / 2 + 30);
     } else if (!global.disconnected) {
         if (global.gameStart) {
             graph.drawImage(document.getElementById('bg'), 0, 0, (global.gameWidth), (global.gameHeight));
-
-            drawgrid();
+            if (global.gridDraw) {
+                drawgrid();
+            }
             fishs.forEach(drawFish);
-
-            if (global.borderDraw && global.playerType == 'player') {
+            if (global.borderDraw && global.playerType != 'spectator') {
                 drawborder();
             }
             drawPlayers();
@@ -589,7 +541,6 @@ function gameLoop() {
         } else {
             graph.fillStyle = '#333333';
             graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
             graph.textAlign = 'center';
             graph.fillStyle = '#FFFFFF';
             graph.font = 'bold 30px sans-serif';
@@ -598,7 +549,6 @@ function gameLoop() {
     } else {
         graph.fillStyle = '#333333';
         graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
         graph.textAlign = 'center';
         graph.fillStyle = '#FFFFFF';
         graph.font = 'bold 30px sans-serif';
@@ -616,14 +566,11 @@ function gameLoop() {
 }
 
 window.addEventListener('resize', resize);
-
 function resize() {
     if (!socket)
         return;
-
-    player.screenWidth = c.width = global.screenWidth = global.playerType == 'player' ? window.innerWidth : global.gameWidth;
-    player.screenHeight = c.height = global.screenHeight = global.playerType == 'player' ? window.innerHeight : global.gameHeight;
-
+    player.screenWidth = c.width = global.screenWidth = global.playerType != 'spectator' ? window.innerWidth : global.gameWidth;
+    player.screenHeight = c.height = global.screenHeight = global.playerType != 'spectator' ? window.innerHeight : global.gameHeight;
     if (global.playerType == 'spectator') {
         player.x = global.gameWidth / 2;
         player.y = global.gameHeight / 2;
