@@ -33,6 +33,7 @@ var C = SAT.Circle;
 
 var gameStart = false;
 var gameWon = false;
+var playerWinner = false;
 
 if (s.host !== "DEFAULT") {
     var pool = sql.createConnection({
@@ -261,7 +262,7 @@ io.on('connection', function (socket) {
     socket.on('pingcheck', function () {
         socket.emit('pongcheck');
     });
-    socket.on('restart', function() {
+    socket.on('restart', function () {
         socket.emit('gameEnded');
     });
     socket.on('windowResized', function (data) {
@@ -403,6 +404,10 @@ function gameloop() {
             if (gameStart) {
                 leaderboard = "Égalité !";
                 setTimeout(function () {
+                    for (let i = 0; i < players.length; i++) {
+                        sockets[players[i].id].emit('gameEnded');
+                    }
+                    players = [];
                     for (let i = 0; i < followers.length; i++) {
                         sockets[followers[i].id].emit('gameEnded');
                     }
@@ -418,9 +423,13 @@ function gameloop() {
             if (gameStart) {
                 leaderboard = "Nous avons un gagnant !<br/>Bravo à " + players[0].name + " !";
                 gameWon = true;
+                playerWinner = players[0];
                 setTimeout(function () {
-                    console.log('[DEBUG] User win: ' + players[0].name);
-                    sockets[players[0].id].emit('WIN');
+                    console.log('[DEBUG] User win: ' + playerWinner.name);
+                    sockets[playerWinner.id].emit('WIN');
+                    for (let i = 0; i < players.length; i++) {
+                        sockets[players[i].id].emit('gameEnded');
+                    }
                     players = [];
                     for (let i = 0; i < followers.length; i++) {
                         sockets[followers[i].id].emit('gameEnded');
