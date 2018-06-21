@@ -19,7 +19,7 @@
     "playerBorder": 250,
     "initialBorder": 100,
     "adminPass": "DEFAULT",
-    "startTimer": 10,
+    "startTimer": 30,
     "maxFishs": 60,
     "angleProjection": 2,
     "startSpace": 50,
