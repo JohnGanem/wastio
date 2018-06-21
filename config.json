@@ -3,8 +3,6 @@
     "port": 3000,
     "defaultPlayerSize": 20,
     "fishs": {
-        "fill": "#33ff33",
-        "stroke": "#19D119",
         "strokeWidth": 20,
         "defaultSize": {
             "from": 20,
@@ -31,5 +29,10 @@
         "password": "DEFAULT",
         "database": "DEFAULT",
         "debug": false
-    }
+    },
+    "xsfishs": 2,
+    "smfishs": 2,
+    "mdfishs": 2,
+    "lgfishs": 2,
+    "wastes": 2
 }

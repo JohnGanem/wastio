@@ -294,6 +294,6 @@ input [type="image"]:focus{
     border-style: none;
 }
 
-#bg {
+.hidden {
     display: none;
 }

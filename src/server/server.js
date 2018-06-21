@@ -61,6 +61,7 @@ function addFishs(toAdd) {
         var position = util.randomBorder(startLocation, radius);
         var target = util.randomTargetBorder(startLocation, radius);
         var speed = util.randomInRange(c.fishs.defaultSpeed.from, c.fishs.defaultSpeed.to) / 10;
+        var img = chooseFishImage(size);
         fishs.push({
             id: ((new Date()).getTime() + '' + fishs.length) >>> 0,
             target: target,
@@ -69,11 +70,23 @@ function addFishs(toAdd) {
             y: position.y,
             radius: radius,
             size: size,
-            fill: c.fishs.fill,
-            stroke: c.fishs.stroke,
+            image: img,
+            hue: Math.round(Math.random() * 360),
             strokeWidth: c.fishs.strokeWidth,
             speed: speed
         });
+    }
+}
+
+function chooseFishImage(size) {
+    if (size < 35) {
+        return "xsfish" + util.randomInRange(1, c.xsfishs + 1);
+    } else if (size < 70) {
+        return "smfish" + util.randomInRange(1, c.smfishs + 1);
+    } else if (size < 120) {
+        return "mdfish" + util.randomInRange(1, c.mdfishs + 1);
+    } else {
+        return "lgfish" + util.randomInRange(1, c.lgfishs + 1);
     }
 }
 
@@ -152,6 +165,10 @@ function balanceFishs() {
     }
 }
 
+function choosePlayerImage() {
+    return "waste" + util.randomInRange(1, c.wastes + 1);
+}
+
 io.on('connection', function (socket) {
     console.log('A user connected!', socket.handshake.query.type);
     var type;
@@ -185,6 +202,7 @@ io.on('connection', function (socket) {
                 player.size = 0;
             }
             player.hue = Math.round(Math.random() * 360);
+            player.image = choosePlayerImage();
             currentPlayer = player;
             currentPlayer.lastHeartbeat = new Date().getTime();
 //            io.emit('playerJoin', {name: currentPlayer.name});
@@ -464,6 +482,7 @@ function sendUpdates() {
                                 radius: f.radius,
                                 size: Math.round(f.size),
                                 hue: f.hue,
+                                image: f.image,
                                 name: f.name
                             };
                         } else {
@@ -474,6 +493,7 @@ function sendUpdates() {
                                 radius: f.radius,
                                 size: Math.round(f.size),
                                 hue: f.hue,
+                                image: f.image,
                                 name: f.name
                             };
                         }
@@ -520,6 +540,7 @@ function sendUpdates() {
                             radius: f.radius,
                             size: Math.round(f.size),
                             hue: f.hue,
+                            image: f.image,
                             name: f.name
                         };
                     }
@@ -564,6 +585,7 @@ function sendUpdates() {
                                 radius: f.radius,
                                 size: Math.round(f.size),
                                 hue: f.hue,
+                                image: f.image,
                                 name: f.name
                             };
                         } else {
@@ -574,6 +596,7 @@ function sendUpdates() {
                                 radius: f.radius,
                                 size: Math.round(f.size),
                                 hue: f.hue,
+                                image: f.image,
                                 name: f.name
                             };
                         }

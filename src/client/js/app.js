@@ -302,12 +302,16 @@ function drawCircle(centerX, centerY, radius, sides) {
 }
 
 function drawFish(fish) {
-    graph.strokeStyle = fish.stroke;
-    graph.fillStyle = fish.fill;
+    graph.strokeStyle = 'hsl(' + fish.hue + ', 100%, 45%)';
+    graph.fillStyle = 'hsl(' + fish.hue + ', 100%, 50%)';
     graph.lineWidth = fish.strokeWidth;
     drawCircle(fish.x - player.x + global.screenWidth / 2,
             fish.y - player.y + global.screenHeight / 2,
             fish.radius, global.fishsSides);
+    graph.drawImage(document.getElementById(fish.image),
+            (fish.x - player.x + global.screenWidth / 2) - fish.radius,
+            (fish.y - player.y + global.screenHeight / 2) - fish.radius,
+            fish.size, fish.size);
 }
 
 function drawPlayers() {
@@ -370,6 +374,10 @@ function drawPlayers() {
         graph.lineCap = 'round';
         graph.fill();
         graph.stroke();
+        graph.drawImage(document.getElementById(userCurrent.image),
+                circle.x - userCurrent.radius,
+                circle.y - userCurrent.radius,
+                userCurrent.size, userCurrent.size);
         var nameCell = "";
         if (typeof (userCurrent.id) == "undefined")
             nameCell = player.name;
@@ -384,8 +392,8 @@ function drawPlayers() {
         graph.textAlign = 'center';
         graph.textBaseline = 'middle';
         graph.font = 'bold ' + fontSize + 'px sans-serif';
-        graph.strokeText(nameCell, circle.x, circle.y);
-        graph.fillText(nameCell, circle.x, circle.y);
+        graph.strokeText(nameCell, circle.x, circle.y + userCurrent.size);
+        graph.fillText(nameCell, circle.x, circle.y + userCurrent.size);
     }
 }
 
