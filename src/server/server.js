@@ -17,7 +17,9 @@ var util = require('./lib/util');
 // Call sqlinfo.
 var s = c.sqlinfo;
 
-var users = [];
+var players = [];
+var spectators = [];
+var followers = [];
 var fishs = [];
 var sockets = {};
 
@@ -174,8 +176,6 @@ io.on('connection', function (socket) {
         id: socket.id,
         x: position.x,
         y: position.y,
-        w: c.defaultPlayerSize,
-        h: c.defaultPlayerSize,
         radius: radius,
         size: size,
         hue: Math.round(Math.random() * 360),
@@ -188,7 +188,7 @@ io.on('connection', function (socket) {
     };
     socket.on('gotit', function (player) {
         console.log('[INFO] Player ' + player.name + ' connecting!');
-        if (util.findIndex(users, player.id) > -1) {
+        if (util.findIndex(players, player.id) > -1) {
             console.log('[INFO] Player ID is already connected, kicking.');
             socket.disconnect();
         } else if (!util.validNick(player.name)) {
@@ -203,7 +203,7 @@ io.on('connection', function (socket) {
             player.y = position.y;
             player.target.x = 0;
             player.target.y = 0;
-            if (type === 'player') {
+            if (type === 'player' && gameStart == false) {
                 player.radius = radius;
                 player.size = c.defaultPlayerSize;
             } else {
@@ -213,14 +213,29 @@ io.on('connection', function (socket) {
             player.hue = Math.round(Math.random() * 360);
             currentPlayer = player;
             currentPlayer.lastHeartbeat = new Date().getTime();
-            users.push(currentPlayer);
 //            io.emit('playerJoin', {name: currentPlayer.name});
-            socket.emit('gameSetup', {
-                gameWidth: c.gameWidth,
-                gameHeight: c.gameHeight,
-                playerBorder: c.playerBorder
-            });
-            console.log('Total players: ' + users.length);
+            if (gameStart && type == "player") {
+                type = "follower";
+                socket.emit('gameStarted', {
+                    gameWidth: c.gameWidth,
+                    gameHeight: c.gameHeight,
+                    playerBorder: c.playerBorder,
+                    idToFollow: util.randomInRange(0, players.length)
+                });
+                followers.push(currentPlayer);
+            } else {
+                socket.emit('gameSetup', {
+                    gameWidth: c.gameWidth,
+                    gameHeight: c.gameHeight,
+                    playerBorder: c.playerBorder
+                });
+                if (type === 'player') {
+                    players.push(currentPlayer);
+                    console.log('Total players: ' + players.length);
+                } else {
+                    spectators.push(currentPlayer);
+                }
+            }
         }
 
     });
@@ -230,16 +245,34 @@ io.on('connection', function (socket) {
     socket.on('windowResized', function (data) {
         currentPlayer.screenWidth = data.screenWidth;
         currentPlayer.screenHeight = data.screenHeight;
+        currentPlayer.followPlayer = data.followPlayer;
+        if (currentPlayer.followPlayer !== false) {
+            currentPlayer.type = "follower";
+        }
     });
     socket.on('respawn', function () {
-        if (util.findIndex(users, currentPlayer.id) > -1)
-            users.splice(util.findIndex(users, currentPlayer.id), 1);
+        if (util.findIndex(players, currentPlayer.id) > -1) {
+            players.splice(util.findIndex(players, currentPlayer.id), 1);
+        }
+        if (util.findIndex(spectators, currentPlayer.id) > -1) {
+            spectators.splice(util.findIndex(spectators, currentPlayer.id), 1);
+        }
+        if (util.findIndex(followers, currentPlayer.id) > -1) {
+            followers.splice(util.findIndex(followers, currentPlayer.id), 1);
+        }
         socket.emit('welcome', currentPlayer);
-        console.log('[INFO] User ' + currentPlayer.name + ' respawned!');
+        console.log('[INFO] Player ' + currentPlayer.name + ' respawned!');
     });
     socket.on('disconnect', function () {
-        if (util.findIndex(users, currentPlayer.id) > -1)
-            users.splice(util.findIndex(users, currentPlayer.id), 1);
+        if (util.findIndex(players, currentPlayer.id) > -1) {
+            players.splice(util.findIndex(players, currentPlayer.id), 1);
+        }
+        if (util.findIndex(spectators, currentPlayer.id) > -1) {
+            spectators.splice(util.findIndex(spectators, currentPlayer.id), 1);
+        }
+        if (util.findIndex(followers, currentPlayer.id) > -1) {
+            followers.splice(util.findIndex(followers, currentPlayer.id), 1);
+        }
         console.log('[INFO] User ' + currentPlayer.name + ' disconnected!');
 //        socket.broadcast.emit('playerDisconnect', {name: currentPlayer.name});
     });
@@ -256,40 +289,38 @@ function tickPlayer(currentPlayer) {
     function funcCollide(f) {
         return SAT.testCircleCircle(new C(new V(f.x, f.y), f.radius), playerCircle);
     }
-    if (currentPlayer.type == 'player') {
-        if (currentPlayer.lastHeartbeat < new Date().getTime() - c.maxHeartbeatInterval) {
-            sockets[currentPlayer.id].emit('kick', 'Aucune activité depuis ' + (c.maxHeartbeatInterval / 1000) + ' secondes. Vous avez été déconnecté.');
-            sockets[currentPlayer.id].disconnect();
-        }
-
-        movePlayer(currentPlayer);
-
-        var playerCircle = new C(
-                new V(currentPlayer.x, currentPlayer.y),
-                currentPlayer.radius
-                );
-        var fishCollision = fishs.map(funcCollide)
-                .reduce(function (a, b, c) {
-                    return b ? a.concat(c) : a;
-                }, []);
-        if (fishCollision > 0) {
-            console.log('[DEBUG] Killing user: ' + currentPlayer.name);
-            users.splice(util.findIndex(users, currentPlayer.id), 1);
-            sockets[currentPlayer.id].emit('RIP');
-            fishs.splice(fishCollision, 1);
-        }
-
-        if (typeof (currentPlayer.speed) == "undefined") {
-            currentPlayer.speed = 4;
-        }
-        playerCircle.r = currentPlayer.radius;
+    if (currentPlayer.lastHeartbeat < new Date().getTime() - c.maxHeartbeatInterval) {
+        sockets[currentPlayer.id].emit('kick', 'Aucune activité depuis ' + (c.maxHeartbeatInterval / 1000) + ' secondes. Vous avez été déconnecté.');
+        sockets[currentPlayer.id].disconnect();
     }
+
+    movePlayer(currentPlayer);
+
+    var playerCircle = new C(
+            new V(currentPlayer.x, currentPlayer.y),
+            currentPlayer.radius
+            );
+    var fishCollision = fishs.map(funcCollide)
+            .reduce(function (a, b, c) {
+                return b ? a.concat(c) : a;
+            }, []);
+    if (fishCollision > 0) {
+        console.log('[DEBUG] Killing player: ' + currentPlayer.name);
+//            players.splice(util.findIndex(players, currentPlayer.id), 1);
+//            sockets[currentPlayer.id].emit('RIP');
+        fishs.splice(fishCollision, 1);
+    }
+
+    if (typeof (currentPlayer.speed) == "undefined") {
+        currentPlayer.speed = 4;
+    }
+    playerCircle.r = currentPlayer.radius;
 }
 
 function moveloop() {
     if (gameStart) {
-        for (var i = 0; i < users.length; i++) {
-            tickPlayer(users[i]);
+        for (var i = 0; i < players.length; i++) {
+            tickPlayer(players[i]);
         }
         for (i = 0; i < fishs.length; i++) {
             if (fishs[i].speed > 0)
@@ -298,19 +329,9 @@ function moveloop() {
     }
 }
 
-function countPlayer() {
-    var nb = 0;
-    for (var i = 0; i < users.length; i++) {
-        if (users[i].type == 'player') {
-            nb++;
-        }
-    }
-    return nb;
-}
-
 function gameloop() {
     /* Leaderboard et déroulement de la partie */
-    var nbPlayersNow = countPlayer();
+    var nbPlayersNow = players.length;
     if (nbPlayersNow != nbPlayers) {
         nbPlayers = nbPlayersNow;
         leaderboardChanged = true;
@@ -324,20 +345,11 @@ function gameloop() {
         } else if (nbPlayers == 1) {
             if (gameStart) {
                 gameStart = false;
-                leaderboard = "Nous avons un gagnant !";
-                var id;
-                var name;
-                for (var i = 0; i < users.length; i++) {
-                    if (users[i].type == 'player') {
-                        id = users[i].id;
-                        name = users[i].name;
-                        break;
-                    }
-                }
+                leaderboard = "Nous avons un gagnant !<br/>Bravo à " + players[0].name + " !";
                 setTimeout(function () {
-                    console.log('[DEBUG] User win: ' + name);
-                    users.splice(util.findIndex(users, id), 1);
-                    sockets[id].emit('WIN');
+                    console.log('[DEBUG] User win: ' + players[0].name);
+                    players.splice(util.findIndex(players, players[0].id), 1);
+                    sockets[players[0].id].emit('WIN');
                 }, 2500);
             } else {
                 leaderboard = "Il y a 1 joueur connecté";
@@ -395,10 +407,7 @@ function getTimeLeft(timeout) {
 }
 
 function sendUpdates() {
-    users.forEach(function (u) {
-// center the view if x/y is undefined, this will happen for spectators
-        u.x = u.x || c.gameWidth / 2;
-        u.y = u.y || c.gameHeight / 2;
+    players.forEach(function (u) {
         var visibleFishs = fishs
                 .map(function (f) {
                     if (f.x > u.x - u.screenWidth / 2 - f.radius &&
@@ -411,9 +420,9 @@ function sendUpdates() {
                 .filter(function (f) {
                     return f;
                 });
-        var visibleUsers = users
+        var visiblePlayers = players
                 .map(function (f) {
-                    if (f.type == 'player' && f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
+                    if (f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
                             f.x - f.radius < u.x + u.screenWidth / 2 + 20 &&
                             f.y + f.radius > u.y - u.screenHeight / 2 - 20 &&
                             f.y - f.radius < u.y + u.screenHeight / 2 + 20) {
@@ -434,7 +443,7 @@ function sendUpdates() {
                                 y: f.y,
                                 radius: f.radius,
                                 size: Math.round(f.size),
-                                hue: f.hue,
+                                hue: f.hue
                             };
                         }
                     }
@@ -443,11 +452,121 @@ function sendUpdates() {
                 .filter(function (f) {
                     return f;
                 });
-        sockets[u.id].emit('serverTellPlayerMove', visibleUsers, visibleFishs);
+        sockets[u.id].emit('serverTellPlayerMove', visiblePlayers, visibleFishs);
         if (leaderboardChanged) {
             sockets[u.id].emit('leaderboard', {
-                players: users.length,
+                players: players.length,
                 leaderboard: leaderboard
+            });
+        }
+    });
+    spectators.forEach(function (u) {
+// center the view if x/y is undefined, this will happen for spectators
+        u.x = c.gameWidth / 2;
+        u.y = c.gameHeight / 2;
+        var visibleFishs = fishs
+                .map(function (f) {
+                    if (f.x > u.x - u.screenWidth / 2 - f.radius &&
+                            f.x < u.x + u.screenWidth / 2 + f.radius &&
+                            f.y > u.y - u.screenHeight / 2 - f.radius &&
+                            f.y < u.y + u.screenHeight / 2 + f.radius) {
+                        return f;
+                    }
+                })
+                .filter(function (f) {
+                    return f;
+                });
+        var visiblePlayers = players
+                .map(function (f) {
+                    if (f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
+                            f.x - f.radius < u.x + u.screenWidth / 2 + 20 &&
+                            f.y + f.radius > u.y - u.screenHeight / 2 - 20 &&
+                            f.y - f.radius < u.y + u.screenHeight / 2 + 20) {
+                        if (f.id !== u.id) {
+                            return {
+                                id: f.id,
+                                x: f.x,
+                                y: f.y,
+                                radius: f.radius,
+                                size: Math.round(f.size),
+                                hue: f.hue,
+                                name: f.name
+                            };
+                        } else {
+                            //console.log("Nombre: " + f.name + " est un utilisateur");
+                            return {
+                                x: f.x,
+                                y: f.y,
+                                radius: f.radius,
+                                size: Math.round(f.size),
+                                hue: f.hue
+                            };
+                        }
+                    }
+
+                })
+                .filter(function (f) {
+                    return f;
+                });
+        sockets[u.id].emit('serverTellPlayerMove', visiblePlayers, visibleFishs);
+        if (leaderboardChanged) {
+            sockets[u.id].emit('leaderboard', {
+                players: players.length,
+                leaderboard: leaderboard
+            });
+        }
+    });
+    followers.forEach(function (follower) {
+        var u = players[follower.idToFollow];
+        var visibleFishs = fishs
+                .map(function (f) {
+                    if (f.x > u.x - u.screenWidth / 2 - f.radius &&
+                            f.x < u.x + u.screenWidth / 2 + f.radius &&
+                            f.y > u.y - u.screenHeight / 2 - f.radius &&
+                            f.y < u.y + u.screenHeight / 2 + f.radius) {
+                        return f;
+                    }
+                })
+                .filter(function (f) {
+                    return f;
+                });
+        var visiblePlayers = players
+                .map(function (f) {
+                    if (f.x + f.radius > u.x - u.screenWidth / 2 - 20 &&
+                            f.x - f.radius < u.x + u.screenWidth / 2 + 20 &&
+                            f.y + f.radius > u.y - u.screenHeight / 2 - 20 &&
+                            f.y - f.radius < u.y + u.screenHeight / 2 + 20) {
+                        if (f.id !== u.id) {
+                            return {
+                                id: f.id,
+                                x: f.x,
+                                y: f.y,
+                                radius: f.radius,
+                                size: Math.round(f.size),
+                                hue: f.hue,
+                                name: f.name
+                            };
+                        } else {
+                            //console.log("Nombre: " + f.name + " est un utilisateur");
+                            return {
+                                x: f.x,
+                                y: f.y,
+                                radius: f.radius,
+                                size: Math.round(f.size),
+                                hue: f.hue
+                            };
+                        }
+                    }
+
+                })
+                .filter(function (f) {
+                    return f;
+                });
+        sockets[follower.id].emit('serverTellPlayerMove', visiblePlayers, visibleFishs);
+        if (leaderboardChanged) {
+            sockets[u.id].emit('leaderboard', {
+                players: players.length,
+                leaderboard: leaderboard + "<br/><br/>Vous suivez le joueur " + u.name
             });
         }
     });

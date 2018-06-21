@@ -24,9 +24,9 @@ module.exports = {
     disconnected: false,
     died: false,
     win: false,
+    followPlayer: false,
     kicked: false,
     startPingTime: 0,
-    toggleMassState: 0,
     backgroundColor: '#f2fbff',
     lineColor: '#000000',
 };

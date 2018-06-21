@@ -119,7 +119,7 @@ var player = {
 global.player = player;
 
 var leaderboard;
-var users = [];
+var players = [];
 var fishs = [];
 
 var target = {x: player.x, y: player.y};
@@ -202,6 +202,14 @@ function setupSocket(socket) {
         c.focus();
     });
 
+    socket.on('gameStarted', function (data) {
+        global.gameWidth = data.gameWidth;
+        global.gameHeight = data.gameHeight;
+        global.playerBorder = data.playerBorder;
+        global.followPlayer = data.idToFollow;
+        resize();
+    });
+
     socket.on('gameSetup', function (data) {
         global.gameWidth = data.gameWidth;
         global.gameHeight = data.gameHeight;
@@ -248,7 +256,7 @@ function setupSocket(socket) {
                 i = userData.length;
             }
         }
-        if (global.playerType == 'player') {
+        if (global.playerType != 'spectator') {
             var xoffset = player.x - playerData.x;
             var yoffset = player.y - playerData.y;
 
@@ -260,7 +268,7 @@ function setupSocket(socket) {
             player.xoffset = isNaN(xoffset) ? 0 : xoffset;
             player.yoffset = isNaN(yoffset) ? 0 : yoffset;
         }
-        users = userData;
+        players = userData;
         fishs = fishsList;
     });
 
@@ -293,7 +301,7 @@ function setupSocket(socket) {
             }
         }, 1500);
     });
-    
+
     socket.on('kick', function (data) {
         global.gameStart = false;
         reason = data;
@@ -341,8 +349,8 @@ function drawPlayers() {
         y: player.y - (global.screenHeight / 2)
     };
 
-    for (var z = 0; z < users.length; z++) {
-        var userCurrent = users[z];
+    for (var z = 0; z < players.length; z++) {
+        var userCurrent = players[z];
 
         var x = 0;
         var y = 0;
@@ -596,5 +604,5 @@ function resize() {
         document.getElementById('gameAreaWrapper').style.left = "calc((100% - " + global.gameWidth + "px) / 2)";
     }
 
-    socket.emit('windowResized', {screenWidth: global.screenWidth, screenHeight: global.screenHeight});
+    socket.emit('windowResized', {screenWidth: global.screenWidth, screenHeight: global.screenHeight, followPlayer: followPlayer});
 }
