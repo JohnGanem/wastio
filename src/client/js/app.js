@@ -604,5 +604,5 @@ function resize() {
         document.getElementById('gameAreaWrapper').style.left = "calc((100% - " + global.gameWidth + "px) / 2)";
     }
 
-    socket.emit('windowResized', {screenWidth: global.screenWidth, screenHeight: global.screenHeight, followPlayer: followPlayer});
+    socket.emit('windowResized', {screenWidth: global.screenWidth, screenHeight: global.screenHeight, followPlayer: global.followPlayer});
 }
