@@ -30,7 +30,7 @@ var leaderboardChanged = false;
 
 var V = SAT.Vector;
 var C = SAT.Circle;
-
+ 
 var gameStart = false;
 
 if (s.host !== "DEFAULT") {
