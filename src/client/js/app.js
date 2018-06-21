@@ -76,8 +76,12 @@ window.onload = function () {
     settingsMenu.onclick = function () {
         if (settings.style.maxHeight == '300px') {
             settings.style.maxHeight = '0px';
+            setTimeout(function () {
+                settings.classList.remove("panel");
+            }, 700);
         } else {
             settings.style.maxHeight = '300px';
+            settings.classList.add("panel");
         }
     };
     playerNameInput.addEventListener('keypress', function (e) {
@@ -535,7 +539,7 @@ function gameLoop() {
         graph.fillText('à observer', global.screenWidth / 2, global.screenHeight / 2 + 30);
     } else if (!global.disconnected) {
         if (global.gameStart) {
-            graph.drawImage(document.getElementById('bg'), 0, 0, (global.gameWidth), (global.gameHeight));
+            graph.drawImage(document.getElementById('bg'), (player.x - global.screenWidth / 2), (player.y - global.screenHeight / 2), (global.gameWidth+1000), (global.gameHeight+1000), -500, -500, (global.gameWidth), (global.gameHeight));
             if (global.gridDraw) {
                 drawgrid();
             }
